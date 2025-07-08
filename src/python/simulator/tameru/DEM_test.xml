@@ -1,0 +1,8 @@
+<rigidbody2d>
+  <integrator dt="0.000001" dx="0.004" dx_sample_points="0.002" ugrd_dx="0.02" max_time="2.0" />
+  <penalty_impact_map kN="177209.38760736626" gammaN="46.1802" kT="4784653.465398889" gammaT="46.1802" mu="0.5" />
+  <near_earth_gravity g="0.0 -9.81" />
+  <resume templates="./IOData/Circle/12/circle12_template.h5" objects="./IOData/Circle/12/circle12.h5" />
+  <serialization interval="0.001" folder="./IOData/Circle/12/output" objects="objects_%06d.h5" processing_time="./IOData/Circle/12/output/DEM_Processing_Time_./IOData/Circle/12/circle12.h5.csv" />
+
+</rigidbody2d>

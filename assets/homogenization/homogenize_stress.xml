@@ -1,0 +1,8 @@
+<homogenize_stress>
+  <elements templates="Save/square_merge_template.h5" forces="Save/serialized_forces.h5" MPMstress="Save/serialized_sigma.h5" />
+  <stress pre_stress="MPMstress/MPM.h5" post_stress="DEMstress/DEM.h5" stress_pair="Save/stress_pair.h5" strain="DEMstress/DEM2.h5" />
+  <resume resume_fn="DEM_test_resume.xml" resume_MPM_fn="herschel_bulkley.xml" interval="0.0001" />
+  <outlier packing_fraction_threshold="1.2" distance_from_wall_threshold="0.05" />
+  <grid h="0.04" grid_start="" />
+  <rolling base_elem="Rolling/element_data.h5" base_stress="Rolling/stress_pair.h5" rolling_time="0.0001" next_time="0.000400" />
+</homogenize_stress>

@@ -1,0 +1,1041 @@
+\documentclass[12pt]{ltjsarticle}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath, bm}
+\usepackage{float}
+\usepackage{here}
+\usepackage{titlesec}
+
+\makeatletter
+
+%図番号を節毎に分けてリセットする
+\makeatletter
+ \renewcommand{\thefigure}{%
+   \thesubsection.\arabic{figure}}
+  \@addtoreset{figure}{subsection}
+\makeatother
+
+\titleformat*{\section}{\LARGE\bfseries}
+\titleformat*{\subsection}{\large\bfseries}
+
+\makeatletter
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\z@}%
+  {1.0\Cvs \@plus.5\Cdp \@minus.2\Cdp}%
+  {.1\Cvs \@plus.3\Cdp}%
+  {\reset@font\sffamily\normalsize}
+}
+\makeatother
+
+
+%% オリジナルの \paragraph の定義には手をつけずプリアンブルで再定義する
+%%
+
+% \newcommand{\myheadfont}{\normalfont\bfseries}
+% \if@twocolumn
+%   \renewcommand{\paragraph}{\@startsection{paragraph}{4}{\z@}%
+%     {\z@}{-1}% 改行せず 1zw のアキ
+%     {\normalfont\normalsize\headfont}}
+% \else
+%   \renewcommand{\paragraph}{\@startsection{paragraph}{4}{\z@}%
+%     {0.5\Cvs \@plus.5\Cdp \@minus.2\Cdp}%
+%     {-1}% 改行せず 1zw のアキ
+%     {\normalfont\normalsize\headfont}}
+% \fi
+
+\makeatletter
+\renewcommand{\thesection}{第\arabic{section}章}
+\newcommand{\Section}[1]{\section*{#1}
+
+\newcommand{\Tabref}[1]{表~\ref{#1}}
+\newcommand{\Figref}[1]{図~\ref{#1}}
+\addcontentsline{toc}{section}{#1}}
+
+\makeatother
+
+\setcounter{page}{0}
+\setcounter{secnumdepth}{5}
+
+\begin{document}
+
+\title{\Huge{連続体モデリングによる一般形状の粒状物質のシミュレーション}}
+\author{ 原　直人\\
+ Hara Naoto\\
+ 35622220
+ \\\\
+楽 詠コウ \\
+YUE Yonghao \\
+Associate Professor of Integrated Information Technology \\
+\\\\
+青山学院大学 理工学研究科 理工学専攻 知能情報コース\\
+コンピュータグラフィックス研究室\\
+Computer Graphics Laboratory,\\
+Department of Integrated Information Technology,\\
+College of Science and Engineering, Aoyama Gakuin University}
+\date{2024/1/31}
+
+\maketitle
+
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\clearpage
+
+\listoffigures
+
+\clearpage
+
+
+\section{はじめに}
+この章では、問題設定と粒状物質のシミュレーションに関する前提知識を説明する。
+
+\subsection{概要}
+粒状物質とは雪や砂などの個体及び液体の粒のことで自然界において一般的に存在している要素であるが、
+CGを利用したシミュレーションにおいて粒1つ1つの接触や摩擦による相互作用など複雑な挙動を示すための粒状物質のシミュレーションモデルを策定することは困難である。
+粒状物質のシミュレーションの従来法としては「個別要素モデル」と「連続体モデル」の2つのモデルが挙げられる。また 、両モデルを用いた手法を組み合わせることでそれぞれの欠点を補うための手法も提案されており、
+「ハイブリッドな手法」としてリアリティのある効率的なシミュレーションができる事が知られている。
+しかし、この手法で利用されている粒子の形状を球に制限されている。現実世界の粉体形状は完全な球体ではないため、この制限を解決することでより現実的なシミュレーションが実現可能となる。\\
+そこで本研究では、「連続体モデル」において粒状物質の相互作用を再現するための「塑性流動モデル」を、任意の形状に対応した「個別要素モデル」を用いたシミュレーション結果から決定する手法を提案する。
+なお、様々な形状が存在する粒状物質のシミュレーションにおいて、効率的かつ正確に粒子の挙動を再現するためには、
+「ハイブリッドな手法」を他の形状に対応させるという意味で一般化することが望ましい 。
+しかし、「ハイブリッドな手法」を一般化するためには、組み合わせている 二つの手法のそれぞれで球以外の形状のシミュレーションを可能にし、二つの手法を組み合わせて利用した際、定性的に類似したシミュレーションが求められる。
+「個別要素モデル」を用いた手法ではすでに球以外の形状に対応したシミュレーション 手法が提案されている。
+したがって、「連続体モデル」を一般化するために、本研究で提案する手法を用いて、球以外の形状にも使える「個別要素モデル」を用いたシミュレーション結果から「連続体モデル」における「塑性流動モデル」を決定する必要がある。
+これによる「連続体モデル」一般化が「ハイブリッドな手法」で球以外の形状への対応へつながる。
+本研究では「個別要素モデル」を用いたシミュレーションの結果から「塑性流動モデル」を設定することができる手法を提案し 、その手法を用いて粉体の基本形状6種類において、縦横比1:1,1,2,1:3,2:1,3:1,2:2 の崩壊シミュレーションをおこなうことで、
+各形状のモデルの取得実験を行なった 。
+次の節からは粒状物質のシミュレーションにおける基礎知識と論文の構成を述べる。
+
+\subsection{ハイブリッドな手法}
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*{hybrid_sample.png}
+  \end{center}
+\caption{ハイブリッドな粒状シミュレーションの例[6]より引用}
+\end{figure*}
+この節では粒状物質シミュレーションの先行研究である「ハイブリッドな手法」について説明する。
+ハイブリッドな手法では、粒状物質シミュレーション手法の従来法である「個別要素法」と「連続体モデル」のそれぞれの強みを生かした、効率的な粒状物質シミュレーション手法になっている。
+この手法では連続体の適用範囲であるような箇所を連続体領域、シミュレーションの精度が必要とされる箇所では個別要素領域のようにシミュレーションドメインを分割していく。
+分割された片側の領域では個別要素法、もう片方の領域には連続体モデルによるシミュレーションを適用している。
+ここで連続体領域に割り当てられている連続体モデルでは粒状物質の粒１つ１つの相互作用を再現するための降伏条件としてDrucker-Pragerの降伏条件を用いている。
+Drucker-Pragerの降伏条件ではパラメータs, $\alpha$を用いて以下のように表される。
+\begin{equation}
+  \Phi<s-\alpha p<_=0 
+\end{equation}
+\label{dracker_prager}
+式\ref{dracker_prager}を満たすまで材料は弾性体として振る舞い、満たしたとき塑性変形を引き起こす。
+今回用いる連続体モデルでは個別要素法における粒状物質の摩擦を上述した「塑性流動モデル」で近似している。
+この「塑性流動モデル」によって個別要素法における粒状物質の摩擦を近似している。\\
+本研究では、パラメータs, $\alpha$の値を調節し、ランダム性を持たせることで個別要素法に対応する挙動を得られるようにし、結果として「連続体モデル」で任意の形状をした粒状物質の挙動を再現できるようにすることが目的となっている。
+
+\subsection{連続体モデル}
+この節ではハイブリッドな手法で用いられる手法の１つである連続体モデルについて説明する。
+連続体モデルによる粒状物質シミュレーションでは、粒状物質の挙動をパラメータによって再現している。
+粒状物質の山が崩れていく崩壊シミュレーションを行う際、その山がなす安息角は摩擦によって決まる。
+以上のことから「連続体モデル」では摩擦を再現したパラメータによって安息角を調整することができる。\\
+本研究ではそのパラメータの性質を利用して、「個別要素モデル」と「連続体モデル」のシミュレーション結果における安息角の視覚的な比較をおこなった。
+連続体モデルの利点は個々の粒子の粒を明示的に表現しないため、計算が容易なことである。欠点としてはモデル化の前提条件が組み込まれているため、適用範囲が限られてしまうことである。\\
+また、本研究では「連続体モデル」の中でもMaterial Point Method(MPM)という手法を採用している。
+
+\subsection{個別要素法}
+この節ではハイブリッドな手法で用いられる手法の１つである個別要素法について説明する。
+個別要素法では、粒状物質をを離散的にシミュレーションするために、粒子１つ１つに自由度を与え、個々の粒子の挙動とそれに続く相互作用をモデル化する [1, 2, 3, 4, 5].
+この手法は粒１つ１つの自由度を考慮しているため、詳細なシミュレーションが可能であるという利点がある。
+しかし、計算量が多いためコストが高いという欠点がある。\\
+「個別要素法」では任意の形状に対応した手法が提案済みであるため、その挙動に対応した連続体モデルのパラメータとランダム性を本研究で提案する手法によって取得することで、「連続体モデル」を一般化することを目指している。
+
+
+
+
+\subsection{塑性流動モデル}
+塑性流動とは、物体に一定以上の力が加わった際に生じる元に戻らない変形のことである。例えば、砂の山が崩れる、輪ゴムがちぎれるといった変形が当てはまる。
+今回用いる連続体モデルで用いるMPMでは、塑性流動モデルという式を用いて塑性流動を表現している。
+塑性流動モデルは以下のような式によって表現される。
+\begin{equation}
+  \Phi=s-\alpha p
+\end{equation}
+
+物体にかかる力と事前に設定する定数で決まるこの値が、境界値を下回ると塑性変形を引き起こす。
+境界値を上回っている間は、物体は弾性体として振る舞う。
+つまり、この式を変えることによって、物体の塑性変形の仕方を変化させることができ、結果として様々な物体を表現することができる。\\
+本研究では塑性流動モデルをDEMのデータを用いて変更することで、MPMの挙動を、DEMによって再現される一般化した粒状物質の挙動に合わせることで、
+連続体モデルを一般形状に対応させることを目指した。
+
+\newpage
+
+\subsection{連続体モデル一般化へのアプローチ}
+ここでは本研究の目的である、一般化した「個別要素モデル」を用いた結果から「連続体モデル」のパラメータである「塑性流動モデル」を設定するためのアプローチ方法を説明する。
+まず、「「MPM」では、粒子にかかる力について「塑性流動モデル」をもとに塑性流動後の補正を行う。この力の補正をプロットしたものが図である。
+ここで、本研究では前節にも述べた通り二次元のシミュレーションを行うため、縦横軸が粒子にかかる力の縦横方向の大きさを示している。
+下の図のように、水色に色付けしてある領域の力が赤い線に射影されるという補正がかかり黄色の線のような特徴的なプロットとなる。
+そのため本研究ではシミュレーションにより取得したデータをグラフにプロットすることで、この特徴を形状ごとに可視化し評価する。全体的なアプローチは
+\begin{enumerate}
+\item「個別要素モデル」にて粒状物質シミュレーションを行い、粒子にかかる力のデータを取得する
+\item 同じ粒子状態から MPM で塑性流動前の粒子にかかる力のデータを取得する
+\item 塑性流動後の粒子にかかる力が二つの手法で一致するように MPM の「塑性流動モデル」を設定し、ランダム性を持たせる
+\end{enumerate}
+という流れになっている。
+
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=0.6]{stress_plot_sample.PNG}
+  \end{center}
+\caption{応力プロット例}
+\end{figure*}
+
+\subsection{本論文の構成}
+本論文の構成は、本章を含めて5章で構成される。第2章では、本研究の参考にした関連研究を解説する。
+第3章では、本研究デア提案する手法を紹介する。第4章では、本研究で行った実験の概要と実験方法について解説し、実験結果と考察を述べる。
+第５章では、本研究の結論について述べる。
+
+\newpage
+
+\section{関連研究}
+本章では本研究に関連する先行研究を紹介する。
+\subsection{MPMによる粒状物質のシミュレーション}
+「連続体モデル」を用いた手法に関連する研究は、使用する「連続体モデル」を開発する研究 [7]、「シミュレーション手法」の研究 [8, 9]、精度や効率を上げるための研究 [10] の三つの目的に大別できる。
+「ハイブリッドな手法」と呼んでいる先行研究において採用されている「連続体モデル」を用いた手法は Material Point Method(MPM) になっている。
+MaterialPointMethod(MPM)はラグランジュ法における材料粒子とオイラー法おける直行格子を組み合わせたハイブリッドな手法になっている。[11]
+ラグランジュ法とは物体を格子単位の集合体として表現し、粒子１つ１つの物理量を計算する手法である。オイラー法とは空間を格子で区切り、区切られた格子点１つ１の物理量を計算する手法のことである。
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=1.0]{MPM_sample.png}
+  \end{center}
+\caption{MPM概要}
+\end{figure*}
+これら２つの手法を組み合わせたMPMを計算する流れは以下のような手順になっている。
+\begin{enumerate}
+\item 物体をラグランジュ法における材料粒子の集合体として表現し、各粒子の位置や質量などの情報を物体を区切る格子の格子点に送る。
+\item 送られてきた粒子情報をもとに、それぞれの格子で力の計算、速度の更新、衝突判定をおこなう。
+\item 格子で計算した速度を粒子に送る
+\end{enumerate}
+以上のようにラグランジュ法における粒子を用いることで空間内の情報伝達をおこない、力の計算にオイラー法の格子を利用することによって、両手法の利点を生かすことができる手法になっている。
+本研究では、このMPMにおいて様々な形状をした粒状物質の相互作用を再現するための条件となる「塑性流動モデル」を「個別要素法」の結果から設定することを目的としている。
+
+
+\subsection{個別要素法による粒状物質のシミュレーション}
+この節では「個別要素法」に関する基礎知識とすでに提案した「個別要素法」の一般化手法について述べる。
+「個別要素法」は拘束条件によって大きく２つに分類できる。
+１つ目は「ハードな制約」と呼ばれ、粒子が衝突する際に、物体同士のめり込みを許さない制約になっている。シミュレーションのタイムステップを大きくできるというメリットがある。 [12, 13, 14, 15] 
+２つ目は「ソフトな制約」と呼ばれ、粒子が衝突する際にめり込みを許す制約になっている。[16, 17]
+両制約はどちらも現実的な挙動を再現できることが分かっているため、目的に応じて使い分けられている。
+\\
+\begin{figure}[htbp]
+  \begin{tabular}{cc}
+    \begin{minipage}[t]{.5\textwidth}
+      \includegraphics*[keepaspectratio, scale=0.3]{penalty.PNG}
+      \caption{ペナルティ法による力の計算例（形状：五角形）}
+    \end{minipage} &
+
+    \begin{minipage}[t]{.5\textwidth}
+      \includegraphics*[keepaspectratio, scale=0.3]{sdf.PNG}
+      \caption{符号付き距離場の例（形状：五角形）}
+    \end{minipage}
+  \end{tabular}
+\end{figure}
+
+ハイブリッド粒状物質のシミュレーション手法を一般化するために必要となる「個別要素法」の一般化では、相互作用を定義する際の簡便性と柔軟性がありリアルタイム処理に適しているという点から「ソフトな制約」が採用された。また、その制約に適した力の計算方法である「ペナルティ法」が採用されている。[18]
+「個別要素法」の一般化手法では物体の内部と外部を決める「符号付距離場」を定義し、そこに物体の頂点が入っているかで接触判定を行うことで個別要素法を球以外の形状にも対応させた。[19]
+本研究ではこの手法で球以外の形状へ対応することができた個別要素法とMPMで応力を比較することで「連続体モデル」を用いたシミュレーションであるMPMの
+「塑性流動モデル」を「個別要素法」の結果から設定する。これによって、一般形状に連続体モデルを対応させ、結果として「ハイブリッドな手法」の球以外の形状への対応へとつながる。
+
+
+\newpage
+
+\section{提案手法}
+本章では連続体モデリングの一般化に向けた概要と、一般化された個別要素法に対応するMPMにおける「塑性流動モデル」の導出手法について説明する。
+\subsection{連続体モデリングの一般化の概要}
+本研究ではハイブリッドな粒状物質のシミュレーションを球以外の形状にも対応されるために、連続体モデリングを球以外の形状に対応させることを目的としている。
+連続体モデリングを球以外の形状に対応させるためには、その形状に対応した塑性流動モデルを取得する必要がある。
+また、その連続体モデルで再現される力は、ハイブリッドな手法で個別要素法と組み合わせるためには、球以外に対応した塑性流動モデルを取得する必要があり、
+そのモデルで再現された力は、個別要素領域で計算された力と一致する必要がある。
+
+\subsection{両モデルの応力比較}
+前項で説明した通り、連続体モデルにおける塑性流動後の応力と個別要素法から算出される応力は一致する必要がある。また、塑性粒度モデルを用いた応力変化をプロットすると図のように降伏条件上に応力が射影されることが分かる。よって、MPMの塑性流動前の応力から個別要素法の接触力から算出した応力への変化をプロットし比較することで、塑性流動前の応力の射影先となる降伏条件を求めることができる。
+しかし、実際にはデータは離散化されているため、降伏条件の周辺に散らばって存在するため、モデルを導出するためには大量の塑性流動前後の応力データが必要となる。
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*{compare_stress_plot.png}
+  \end{center}
+\caption{理想的なプロットと実際のプロットの比較 (左図: 塑性流動モデルを用いた MPM における塑性流
+動前から後の応力への変移。 右図: MPM における塑性流動前の応力 (青) から個別要素法により算出した
+応力 (赤) への変移。 各点の座標には応力の固有値を使用し、2 つの固有値の内の大きい方を x 座標、小さ
+い方を y 座標としてプロットしている。)}
+\end{figure*}
+
+
+\subsection{塑性流動前後の応力データ収集}
+個別要素モデルと連続体モデルの応力変化を比較するためには両手法でシミュレーションを平行して回し、個別要素モデルからは塑性流動後、連続体モデルからは塑性流動前の応力データをそれぞれ収集する必要がある。しかし、連続体モデルでは粒子ごとに応力が算出されるのに対して、個別要素モデルでは粒子同士が衝突した際の衝突点ごとの接触力のみが算出されるため、両力をそのまま比較することができない。
+そこで、それぞれの手法を用いたシミュレータで算出した力を共通の格子を用いて均質化することで比較する。\\
+図が塑性流動前後の応力データを収集するためのフローチャートになっている。
+事項より各処理の詳細について説明していく。
+
+\subsubsection{データについて}
+本手法では、DEM、MPMのシミュレータをC++、その他の解析ツールをpythonのよって作成しており、応力データの収集ではシミュレーションを通してデータの共有をおこなう必要がある。
+そこで、本研究では各種設定ファイルをxml、出力結果をhdf5を用いてファイルとして保持することでデータを共有する。\\
+詳細を後述するシミュレータでは、3種類のxmlファイル（全体設定、DEM設定、MPM設定）と8種類hdf5ファイル（粒子形状データ、DEM実行結果データ、接触力均質化データ、MPM実行結果データ、応力均質化データ、シミュレーション再開用データ、応力ペアデータ、可視化用粒子データ）を用いる。
+
+
+
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*{syusyu_stress_pair.png}
+  \end{center}
+\caption{応力データ収集フローチャート}
+\end{figure*}
+
+\subsubsection{シミュレーション全体の初期化}
+初期ステップでは、シミュレーションの初期時刻と1ループにおける実行時間を読み込み、「DEM設定ファイル」内のデータを初期化する。これにより時刻0以外からでもシミュレーションを再開できる。
+
+\subsubsection{DEM接触力の取得}
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*{DEM_flow.PNG}
+  \end{center}
+\caption{DEMのシミュレーションフロー}
+\end{figure*}
+本ステップでは個別要素法によるシミュレーションによって接触力を算出する。
+その結果を「DEM実行結果データ」として出力する。シミュレーションの流れは以下のようになっている。
+\begin{enumerate}
+\item 接触粒子の探索 \\
+粒子間の距離を計算し、接触していると判定できる粒子間の距離が近い粒子のペアを
+探索する。
+\item 粒子間の相互作用を計算 \\
+接触が検出された粒子間の衝突、摩擦などの相互作用を計算する。 粒子間の相互作用は法線方向を抗力、剪断方向を摩擦力として作用力を計算する。
+\item 粒子の物理量の更新 \\
+粒子 1 つ 1 つにかかる相互作用を合計する。それぞれの粒子にかかる力を計算した後に並進、回転の 運動方程式を解くことで粒子の位置、姿勢を加速度に応じてタイムステップ分更新する。
+\item タイムステップの更新
+タイムステップを進める
+\end{enumerate}
+
+
+\subsubsection{接触力の均質化}
+本ステップでは前ステップで出力された接触力データに対応する格子の作成と接触力の均質化をおこなう。
+まず、格子の作成では接触点の最大座標と最小座標を利用し、すべての粒子をおおうことのできる大きさで格子を作成する。
+\\
+次の接触力の均質化では接触点からその座標が含まれるセルを求め、そのセルの応力を下の式（Christoffesen の公式 [20]）を用いることで、接触力の均質化をおこなう。
+\begin{equation}
+\sigma_{i j}=\frac{1}{V} \sum_{\alpha \in contacts}^N \frac{1}{2}\left(f_i^\alpha d_j^\alpha+f_j^\alpha d_i^\alpha\right)
+\end{equation}
+以上の処理を行った後、均質がの応力データを塑性流動後の応力として出力する。
+
+\newpage
+
+\subsubsection{MPMによる粒子ごとの応力取得}
+本ステップでは、MPMシミュレーションを実行することで粒子ごとの応力データを算出する。
+
+\paragraph{MPMの実行ステップについて}
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=1.0]{MPM_flow.PNG}
+  \end{center}
+\caption{MPMシミュレーションフロー}
+\end{figure*}
+通常のMPMでは図のようなフローでシミュレーションを実行している。
+しかし、本研究で用いている各タイムステップにおける粒子状態を個別要素法によるシミュレーションの出力データによって設定している。
+そのためMPM実行中に粒子の位置や速度の更新をおこなうことができない。
+したがって上記のフローでシミュレーションをおこなっている。そのフローにおける各ステップの処理を説明していく。
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=1.0]{actual_simulation_flow.PNG}
+  \end{center}
+\caption{実際に使用したMPMのフローチャート}
+\end{figure*}
+
+\paragraph{初期化}
+このステップではMPMで用いられる粒子と格子情報の初期化をおこなう。
+まず格子については、この後のステップでおこなう比較のために、「個別要素法」と「連続体モデル」の間で格子を一致させる必要がある。
+したがって、3.3.4で出力された接触力を格子ごとに均質化したデータの格子情報をもとに格子を生成する。
+次に、粒子については3.3.4で生成された格子が接触力を基準に大きさを決定していることから、生成された格子の範囲外になる粒子が発生する可能性がある。
+そこで本手法では、格子を外れて生成された粒子を初期化の段階で削除する。
+なお、後述するひずみの導出方法の関係上、歪みで使用する応力データを使用することがある点に注意が必要である。
+
+\paragraph{歪の利用と導出}
+本手法では、MPMの初期化時に3.3.4で求めた均質化応力を用いて歪を算出し、その値を粒子の初期ひずみとして与えている。
+これは、初期ひずみを与えず初期化をした場合、粒子の変形状態が無視され、ＭＰＭ側で算出される応力が非常に小さくなるためである。
+導出方法については以下の通りになっている。
+コーシー応力と歪の関係は、キルヒホッフ応力の定義から式(3.2)で表すことができる。
+\begin{equation}
+  \boldsymbol{\sigma}=\frac{\kappa}{2} \frac{\left(J^2-1\right)}{J} \boldsymbol{I}+\frac{\mu}{J} \operatorname{dev}\left[\overline{\boldsymbol{b}^{\boldsymbol{e}}}\right]
+\end{equation}
+次に、式(3)の両辺のトレースを取ることで式(4)となり、これをJについて解く。
+\begin{equation}
+  \operatorname{Tr}[\boldsymbol{\sigma}]=\frac{\kappa\left(J^2-1\right)}{J}
+\end{equation}
+また、式(3)の両辺の偏差を取ることで式(5)を得る。
+\begin{equation}
+  \operatorname{dev}\left[\overline{\boldsymbol{b}^{\boldsymbol{e}}}\right]=\frac{J}{\mu} \operatorname{dev}[\boldsymbol{\sigma}]
+\end{equation}
+さらに、偏差の定義より式(6)が得られる。
+\begin{equation}
+  \overline{\boldsymbol{b}^e}=\operatorname{dev}\left[\overline{\boldsymbol{b}^e}\right]+t \boldsymbol{I}
+\end{equation}
+式(6)に式(4)、(5)で求めた結果を代入し、両辺の行列式を取ることでtについて解く。
+式（6）に式（4）、（5）で求めた結果を代入し両辺の行列式を取ることで t について
+解く。ここで、$\overline{\boldsymbol{b}^e}$ の定義（$\overline{\boldsymbol{b}^e}={b}^e/J$）より $\operatorname{det}\left[\overline{\boldsymbol{b}^e}\right]=1$である。
+以上の計算により、個別要素法で求めた均質化応力からセルごとの歪み${b}^e$を求め、
+粒子ごとに自身が含まれるセルの歪みを初期歪みとして設定する。なお、偏差の定義は
+$\operatorname{dev}\left[X\right] = X - \frac{1}{2}\operatorname{Tr}\left[X\right]I$である。
+
+
+\paragraph{P2G}
+このステップでは、補間関数を用いることで粒子の質量と運動量を格子に転送し、その粒子の質量と運動量から格子の速度を求める。
+
+\paragraph{体積推定}
+このステップでは、補間後の質量から粒子の密度を推定し、求めた密度と粒子の質量を使用して粒子の体積を推定する。
+
+\paragraph{歪み更新}
+このステップでは、補間後の格子の情報から速度勾配を算出し、粒子の歪みを更新する。
+具体的には、式(7)を用いて速度勾配を算出し、式(8)を用いて歪みを更新する。
+\begin{equation}
+  \begin{gathered}
+    \nabla \boldsymbol{v}_p{ }^n=\sum_i \boldsymbol{v}_i{ }^n\left(\nabla \boldsymbol{w}_{i p}{ }^n\right)^T \\
+  \end{gathered}
+\end{equation}
+\begin{equation}
+  \begin{gathered}
+    \boldsymbol{b}_p{ }^e=\boldsymbol{b}_p{ }^e+\Delta t\left(\nabla \boldsymbol{v}_p * \boldsymbol{b}_p{ }^e+\boldsymbol{b}_p{ }^e *\left(\nabla \boldsymbol{v}_p\right)^T\right)
+    \end{gathered}
+\end{equation}
+(pは粒子のインデックス、iは格子のインデックス、wは補間関数、nはタイムステップ)
+
+\subsection{粒子ごとの応力の均質化}
+本ステップでは前項で出力した粒子ごとの応力を用いて格子ごとの塑性流動前の応力を算出する。粒子の位置情報からその粒子が含まれるセルを求め、そのセル内に含まれる粒子の応力を平均することで均質化をおこない、塑性流動前の応力を出力する。
+
+\subsubsection{比較データ作成}
+本ステップでは以前ステップ格子ごとの塑性流動前後の応力データを用いて、ペアとして保存する。また、保存する際に、壁と床に面しているセル、セル内の充填率が一定値に達していないセルについては通常とは異なる応力変化が発生し、ノイズとなる可能性があるため、比較データから除外する。
+
+\subsubsection{設定更新}
+本ステップでは、次ループに向けて実行時間の更新をおこなう。
+
+\subsection{シミュレーションの高速化}
+この節では、実験データを効率よく取得するためにおこなった、上述したシミュレータの高速化について説明していく。
+
+\subsubsection{高速化ライブラリ}
+% \begin{table}[h]
+% \begin{center}
+%   \begin{tabular}{lrrrrr} \hline
+%     \quad & DEM実行 & 接触力の均質化 & MPM実行 & 応力の均質化 & 比較データ作成 \\\hline
+%     高速化前[minute] & 15395.65 &  0 & 0 & 0 & 0\\
+%     高速化後[minute] &  15395.65 &  0 & 0 & 0 & 0\\ \hline
+%   \end{tabular}
+% \end{center}
+%   \caption{高速化前後における七角形2000個の1.0秒間崩壊シミュレーションにおけるシミュレーション時間}
+% \end{table}
+上述したシミュレータは1形状のデータを取得するために、最大で半年近くかかる。したがって、後述する高速化ライブラリを用いることでシミュレータの処理時間の短縮をおこなった。
+\paragraph{taichi}
+Pythonライブラリである「Taichi」とは物理シミュレーションやコンピュータグラフィクスのための高性能な数値計算フレームワークになっている。
+Taichiは並列計算をサポートしており、マルチコアやGPUを同時に使用して計算を高速化することができる。
+\\
+このライブラリを、シミュレーション処理時間の全体で多くを占めていた処理に適用し、シミュレータの高速化をおこなった。
+具体的には、図3.3.1のフローチャートにおける「接触力の均質化」をtaichiのコードに書き換え、並列処理をおこなうことで上述したような処理時間の短縮を実現した。
+
+\paragraph{OpenMP}
+OpenMPは共有メモリが他の並列プログラミングのためのAPIであり、複数スレッドを使用してプログラムの実行を並列化することが可能になる。
+\\
+図3.3.1のフローチャートにおける「DEMの実行」のコードをOpenMP化することによって、上述したように処理時間の高速化をおこなった。
+
+
+\subsection{崩壊シミュレーションの実験環境作成}
+この節では、上述したシミュレーションフローによって崩壊シミュレーションをおこない応力データを取得するために必要となる、実験環境について説明していく。
+崩壊シミュレーションをおこなうためには、指定した縦横比になるような粒子の山を作成する必要がある。以下がその作成手順になる。
+\begin{enumerate}
+  \item 粒子形状の特性（粒子をためる前と後でどれだけ山の高さが縮小するか）に応じた横幅が空いた２枚の壁を作成する。
+  \item 左の図のように、縦横比ごとに決められた個数の粒子を生成する。
+  \item 「個別要素法」のシミュレーションを回すことで、右の画像のような粒子の山を作成する。
+\end{enumerate}
+以上の手順で形状、縦横比ごとに粒子の山を生成した。
+
+\begin{figure}[htbp]
+  \begin{tabular}{cc}
+    \begin{minipage}[t]{.5\textwidth}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.3]{tameru_mae.PNG}
+      \caption{粒子をためる初期状態}
+    \end{minipage} &
+
+    \begin{minipage}[t]{.5\textwidth}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.3]{tameru_ato.PNG}
+      \caption{粒子をためる終了状態}
+    \end{minipage}
+  \end{tabular}
+\end{figure}
+
+
+\subsection{データ解析}
+この節では、3.3で収集したデータから応力の解析をおこなう方法について説明する。
+
+\subsubsection{応力データの圧縮}
+本手法によって取得した応力ペアファイルには膨大なデータ量が含まれており、後述によってファイルをそのままプロットすることは難しいため、
+一定のタイムステップ間隔で同じ格子内の応力を平均し、プロット用の圧縮データを作成する。
+本研究で示すプロットは全て100タイムステップごとにデータを平均し圧縮したものになっている。
+
+\subsubsection{応力のプロット}
+前述の通り、本手法では収集した応力の解析にグラフを使用しており、図3.7.1で示したUIによって応力解析と可視化をおこなった。
+制作したUIの設計は以下の通りである。
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=0.8]{UI.png}
+  \end{center}
+\caption{応力データ解析用UI}
+\end{figure*}
+
+\begin{enumerate}
+  \item 応力プロット画面 \\
+  圧縮した応力データを描画する画面。この際、原点をグラフの中心として、アスペクト比1:1でのみスケール変更可能になっている。
+  また、グラフの下にあるスライダーをずらすことで、応力データをプロットするタイムステップを変更可能になっている。
+  \item 粒子の描画画面 \\
+  粒子状態を描画する画面。また、応力ペアデータからの格子情報から格子を描画し、実際に応力が保存されている格子が黄色い×が付いている。
+  また、画面下にあるスライダーをずらすことで、描画するタイムステップが変更可能になっている。
+  \item 粒子描画設定ツール群 \\
+  描画時の視点のx,y方向への移動と拡大縮小をおこなうためのスライダーを用意している。また、必要に応じて格子や粒子を描画するかどうかを選択するチェックボックスを用意している。
+  \item プロットモード選択ツール群 \\
+  プロットするデータを切り替えるためのボタン。全ての応力データの描画、指定セルのみの応力データの描画、指定タイムステップの応力のみの描画、指定セルかつ指定タイムステップの応力のみの描画の4パターンに分かれている。
+  \item プロット画面設定ツール群 \\
+  プロット範囲や後述する解析結果確認用の直線の傾きを設定することができる。また、プロットするタイムステップの頻度を指定することで、プロット量を調節してデータを可視化できるようにしている。
+  \item セル選択リスト \\
+  応力をプロットするセルを選択するためのリスト。
+\end{enumerate}
+
+\subsubsection{解析手法}
+図3.2.1から求めたい降伏条件は対称性を持っているため、上下どちらかの直線を求めることができれば両方の直線を得られることがわかる。\\
+本研究では、収集した点群の間に降伏条件があると仮定し、塑性流動後の座標平均をとり、その座標と原点を結ぶことで降伏条件となる直線を算出する。
+さらに、求めた降伏条件となる直線を上述した解析用UIで描画し、点群の間を通る直線を得られていれば、その値から塑性流動モデルのパラメータを算出する。
+また、得られた直線が横軸となす角と塑性流動後の点が横軸となす角の差の２乗の平均をとることで、塑性流動後の点までの分散を形状ごとに導出する。
+
+\subsubsection{パラメータの導出方法}
+Drucker-Pragerの降伏条件を用いてパラメータ$\alpha$を求める。
+\begin{equation}
+  \Phi=s-\alpha p
+\end{equation}
+塑性流動後の座標平均のそれぞれの成分を$\sigma_1$,$\sigma_2$として、$s=(\sigma_2-\sigma_1)/2$、$p=(\sigma_2+\sigma_1)/2$として計算している。
+
+\subsubsection{粒子ごとのパラメータの導出方法}
+ここでは、MPMの降伏条件にランダム性を加えるために、「パラメータの導出方法」で得られた形状ごとの$\alpha$と「直線から塑性流動後の点までの分散」を用いて粒子ごとに降伏条件のパラメータを与える。
+直線から得られたαを平均、直線から点群までの分散から求めた標準偏差を用いて正規分布を作成する。粒子ごとのαとして作成した正規分布に従う乱数を生成している。
+
+
+\newpage
+
+\section{実験・考察}
+\subsection{実験環境}
+本研究で作成したシミュレーションの実行環境は以下の通りである。
+\begin{itemize}
+  \item python 3.10.12
+  \item OpenGL
+  \item チップ:Apple M1
+  \item 実装 RAM:16GB
+\end{itemize}
+
+
+\subsection{実験概要}
+本研究では、3.2で示したフローに沿って下の画像のような崩壊シミュレーションをおこなうために、意図した縦横比になるような粒子の山を作成する個別要素法シミュレーションをおこなう。
+続いて、個別要素法で求めた均質化応力とそれを初期化したMPMパラメータの整合性について検証をおこなう。
+そこから3.2で示したフローで崩壊シミュレーションを実行し、その出力データを解析することで塑性流動モデルを求める。
+また、解析の際はノイズの影響を考慮し、壁や床付近、充填率の低いセルを取り除いていた。
+図が実際に応力ペアを取得しているセルを表しており、黄色いセルのように外れ値となるであろうセルは解析の前に取り除いている。
+
+本研究では粒子形状に円、三角形、四角形、五角形、星形、L字を使用し、それぞれ1:1, 1:2, 1:3, 2:1, 3:1, 2:2の6パターンの実験環境を用意した。
+また結果として得られた塑性流動モデルを用いて個別要素法と連続体モデルのシミュレーションの動作を比較することで
+モデルの妥当性を評価する。
+\begin{figure*}[htbp]
+\centering
+  \includegraphics*[scale=0.4]{nagasu_kousi.png}
+\caption{崩壊シミュレーションの例}
+\end{figure*}
+
+\clearpage
+
+\subsubsection{パラメータ}
+\begin{figure*}[htbp]
+  \centering
+  \includegraphics*[scale=0.5]{keijou.png}
+\caption{実験で使用した粉体形状}
+\end{figure*}
+
+今回の実験では、粒子径を0.01とした。ここでの粒子径は粒子を円と仮定した場合の直径の値である。
+粒子の個数は1:1が2500個、1:2と2:1が5000個、1:3と3:1が7500個、10000個になっている。
+粒子の山の幅は以下のように設定した。
+\\
+\begin{center}
+\begin{tabular}{lrrr} \hline
+  形状 & 1:1,2:1,3:1 & 1:2, 2:2 & 1:3 \\\hline
+  円 & 0.47 & 0.93 & 1.39 \\
+  三角形 & 0.35 & 0.69 & 1.04 \\
+  五角形 & 0.43 & 0.86 & 1.29\\
+  星形 & 0.39 & 0.78 & 1.17 \\
+  L字 & 0.36 & 0.71 & 1.07 \\ \hline
+\end{tabular}
+\end{center}
+また、個別要素法、MPMシミュレーションにおけるパラメータは以下の通りである。\\
+\begin{itemize}
+  \item 個別要素法\\
+  $\Delta t = 0.000001、\kappa_N = 177209.38760736626、\kappa_T = 4784653.465398889、\gamma_N = 46.1802、\gamma_T = 46.1802、\mu = 0.5$
+
+  \item MPM\\
+  $\Delta t = 0.000001、\kappa = 14000000.0、\mu = 6461500.4、\sigma_y = 1.0、n = 0.43、\eta = 200.0、sample\_point = 0.01(円、五角形のみ0.02)、 ugrd\_dx = 0.02$
+\end{itemize}
+
+\subsection{実験結果}
+この節では本研究でおこなった実験の結果を示す。
+
+\subsubsection{整合性検証}
+ここでは個別要素法で求めた均質化応力とそれを初期化したMPMパラメータの整合性について検証について説明する。
+図3.2で示した応力フローのうち、MPMの実行段階における歪の更新を停止することで、接触力の均質化と応力の均質化によって出力されるデータが等しくなるかどうかを検証した。
+接触力の均質化と応力の均質化によって出力されるデータが一致するかどうかを検証した。
+\\
+また、ここではプロットのアスペクト比を固定し原点位置の固定を解除し、点群を拡大して表示している。
+
+\begin{figure*}[htbp]
+  \begin{center}
+  \includegraphics*[scale=1.0]{check_consistency.png}
+  \end{center}
+\caption{個別要素法とMPMの整合性の検証}
+\end{figure*}
+
+\subsubsection{シミュレーション初期状態}
+各環境のシミュレーション時の粒子の初期状態は以下のようになっている。
+形状は左の列が上から円、四角形、星形形、右の列が上から三角形、L字、五角形になっている。
+
+\clearpage
+
+\begin{figure}[htbp]
+  \begin{tabular}{cc}
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{1_1_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比1:1）}
+    \end{minipage} &
+
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{1_2_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比1:2）}
+    \end{minipage} \\
+
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{1_3_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比1:3）}
+    \end{minipage} &
+
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{2_1_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比2:1）}
+    \end{minipage} \\
+
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{3_1_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比3:1）}
+    \end{minipage} &
+
+    \begin{minipage}[t]{0.45\hsize}
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.25]{2_2_tameru.PNG}
+      \caption{シミュレーション初期状態（縦横比2:2）}
+    \end{minipage}
+  \end{tabular}
+\end{figure}
+
+\subsubsection{応力収集}
+以上の粒子の山について崩壊シミュレーションをおこない、その際の応力変化データを収取した。
+
+\subsubsection{シミュレーション終了状態}
+各環境のシミュレーション終了時においての粒子の状態は以下のようになっている。
+形状は上の段は左から円、三角形、四角形、下の段は左から五角形、星形、L字になっている。
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{1_1_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比1:1）}
+    \end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{1_2_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比1:2）}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{1_2_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比1:3）}
+\end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{2_1_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比2:1）}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{3_1_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比3:1）}
+\end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics*[keepaspectratio, scale=0.35]{2_2_nagasu.PNG}
+      \caption{シミュレーション終了状態（縦横比2:2）}
+\end{figure}
+
+
+\subsubsection{応力プロット}
+各シミュレーションで収集した塑性流動前後の応力のプロット結果が以下である。図はMPMによる塑性流動前の点を赤色、
+DEMによる塑性流動後の点を青色でプロットしている。さらに、それら２点への移動を黄色い線で表している。
+また、本研究では原点周辺と第４象限内のデータを外れ値として扱い、取り除いてから解析を行っている。
+
+\subsubsection{応力データ解析}
+形状ごとに塑性流動後の座標平均を利用してデータ解析を行った結果が以下のようになっている。
+\paragraph{座標平均からのα導出}
+\begin{table}[htbp]
+  \begin{minipage}[c]{.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [-245.58 -791.38] & 25671206 \\
+      1:2 & [ -956.74 -1921.23]& 150734817 \\
+      1:3 & [-1110.49 -2008.17] & 254953764 \\ 
+      2:1 & [-1267.77 -2719.62] & 97510501 \\
+      3:1 & [-2097.17 -4364.38] & 124061737 \\
+      2:2 &  [-1862.61 -3575.77] & 325226538 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（円）}
+  \end{minipage}
+  \begin{minipage}[c]{.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [ -422.79 -1155.04 ] & 45178895 \\
+      1:2 & [ -603.39 -1488.57] & 107940676 \\
+      1:3 & [ -692.23  -1526.26] & 227635551 \\ 
+      2:1 & [ -791.67 -2286.17] & 54115536 \\
+      3:1 & [-1297.70 -3668.20] & 72455064 \\
+      2:2 & [-1125.20 -2841.79] & 181647473 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（三角形）}
+  \end{minipage}
+\end{table}
+\begin{table}[htbp]
+  \begin{minipage}[c]{.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [-344.69 -999.33] &  17652259 \\
+      1:2 &[ -515.09 -1158.37] & 59764376 \\
+      1:3 & [ -614.09 -1211.21 ] & 99768819 \\ 
+      2:1 & [ -503.81 -1442.85] & 58904973 \\
+      3:1 & [ -663.41 -1910.26] & 90007679 \\
+      2:2 & [ -756.15 -1872.16]& 182988749 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（四角形）}
+  \end{minipage}
+  \begin{minipage}[c]{0.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [ -443.98 -1339.85] & 55575608 \\
+      1:2 & [ -562.55 -1593.02]& 115550585 \\
+      1:3 & [ -659.59 -1618.37] & 200530824 \\ 
+      2:1 & [ -736.42 -2234.65] & 101500432 \\
+      3:1 & [ -919.30 -2539.76] & 225052507 \\
+      2:2 & [ -999.49 -2894.85] & 313119967 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（五角形）}
+  \end{minipage} \\
+\end{table}
+\begin{table}[htbp]
+  \begin{minipage}[c]{.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [ -297.06 -927.78 ] & 55022426 \\
+      1:2 & [ -358.78 -1242.43] & 92625642 \\
+      1:3 & [ -361.87 -1133.09] & 153696365 \\ 
+      2:1 & [ -449.33 -1553.41] & 103967089 \\
+      3:1 & [ -659.00 -2138.17] & 133370709 \\
+      2:2 & [ -555.66 -2118.27] & 253149965 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（星形）}
+  \end{minipage}
+  \begin{minipage}[c]{.5\textwidth}
+    \centering
+    \begin{tabular}{ccc} \hline
+      縦横比 & DEM座標平均(x, y) & データ数\\\hline
+      1:1 & [-245.57 -791.38] & 25671206 \\
+      1:2 & [-327.13 -877.10] & 71228002 \\
+      1:3 & [-375.52 -846.90] & 177109206 \\ 
+      2:1 & [ -313.67 -1201.42] & 70327807 \\
+      3:1 & [ -389.45 -1484.88] & 121814036 \\
+      2:2 & [ -496.92 -1553.60] & 160591445 \\
+    \end{tabular}
+    \caption{塑性流動後の点の座標平均算（L字）}
+  \end{minipage} \\
+\end{table}
+
+\clearpage
+
+\paragraph{座標平均による解析結果}
+形状ごとに移動平均を利用してデータ解析を行った結果は以下のようになっている。
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{1_1_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比1:1）}
+    \label{stress_plot_circle}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{1_2_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比1:2）}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{1_2_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比1:3）}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{2_1_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比2:1）}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{3_1_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比3:1）}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics*[keepaspectratio, scale=0.4]{2_2_analysis.PNG}
+    \caption{座標平均から算出した直線（縦横比2:2）}
+    \label{stress_plot_L}
+\end{figure}
+
+\subsubsection{\alpha}
+\begin{figure}[htbp]
+\centering
+  \begin{tabular}{lrrr} \hline
+    形状 & 円 & 三角形 & 四角形 \\
+    $\alpha$ & 0.342 & 0.424 & 0.431\\ \hline
+    形状 & 五角形 & 星形 & L字 \\
+    $\alpha$ & 0.478 & 0.553 & 0.506 \\ \hline
+  \end{tabular}
+  \caption{各形状における塑性流動後の座標平均から算出したαの値}
+\end{figure}
+
+\subsubsection{ランダム性}
+\begin{figure}[htbp]
+\centering
+  \begin{tabular}{lrrr} \hline
+    形状 & 円 & 三角形 & 四角形 \\
+    分散 & 0.016 & 0.014 & 0.021\\ \hline
+    形状 & 五角形 & 星形 & L字 \\
+    分散 & 0.011 & 0.015  & 0.023 \\ \hline
+  \end{tabular}
+  \caption{各形状における座標平均からの直線から塑性流動後の点群までの分散}
+\end{figure}
+
+\subsubsection{モデルの検証}
+以下の図は、各形状において求めたα値と降伏条件からのランダム性を用いて行ったMPMシミュレーションと個別要素法によるシミュレーション結果の比較を示している。
+\paragraph{DEMとMPM（ランダム性なし）の安息角比較}
+以下の図は、各形状ごとに塑性流動後の点の座標平均によって求めた、αを用いておこなったMPMシミュレーションと個別要素法によるシミュレーション結果を示している。
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.4]{circle_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）のシミュレーション比較（粒子形状:円、α=0.342）}
+  \label{hikaku_ansoku_circle}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.65]{triangle_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とのシミュレーション比較（粒子形状:三角形、α=0.424）}
+  \label{hikaku_ansoku_triangle}
+\end{figure}
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.6]{square_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）のシミュレーション比較（粒子形状:四角形、α=0.431）}
+  \label{hikaku_ansoku_square}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.6]{pentagon_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）のシミュレーション比較（粒子形状:五角形、α=0.478）}
+  \label{hikaku_ansoku_pentagon}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.6]{L_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）のシミュレーション比較（粒子形状:L字、α=0.506）}
+  \label{hikaku_ansoku_L}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.6]{star_ansoku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）のシミュレーション比較（粒子形状:星形）}
+  \label{hikaku_ansoku_star}
+\end{figure}
+
+
+\paragraph{DEMとMPM（ランダム性なし）とMPM（ランダム性あり）の比較}
+以下の図は、各形状ごとに塑性流動後の点の座標平均によって求めた、αを用いておこなったMPMシミュレーション（ランダム性なし）と直線から塑性流動後の点までの分散からの標準偏差の正規分布に従った乱数を用いておこなったMPMシミュレーション（ランダム性あり）の比較を示している。
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{circle_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:円、α=0.342、分散=0.016）}
+  \label{hikaku_circle}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{triangle_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:三角形、α=0.424、分散=0.014）}
+  \label{hikaku_triangle}
+\end{figure}
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{square_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:四角形、α=0.431、分散=0.021）}
+  \label{hikaku_square}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{pentagon_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:五角形、α=0.478、分散=0.011）}
+  \label{hikaku_pentagon}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{L_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:L字、α=0.506、分散=0.023）}
+  \label{hikaku_L}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.35]{star_hikaku.PNG}
+  \caption{左からDEMとMPM（ランダム性なし）とMPM（ランダム性あり）のシミュレーション比較（粒子形状:星形、α=0.553、分散=0.015）}
+  \label{hikaku_star}
+\end{figure}
+
+
+
+\subsection{考察}
+今回の実験では図4.3.1より、歪みの更新を停止した場合に出力される応力データがMPMとDEM間で一致しているため、MPMシミュレータの初期化と均質化したデータの整合性を取ることができていると考えられる。
+図\ref{stress_plot_circle}〜\ref{stress_plot_L}から降伏条件は降伏条件となる直線から離れて分布していることから、直線によって降伏境界を決めるだけでなく、直線で決められた降伏条件にランダム性が必要だと考えられる。\\
+さらに、図\ref{hikaku_ansoku_circle}〜\ref{hikaku_ansoku_L}における個別要素法とMPM（ランダム性なし）の間で近い自由表面の傾きを得られたことが確認できる。
+この結果から、本研究で用いた座標平均による応力データの解析によって、基本形状5種類の個別要素法に対応した塑性流動モデルを取得することに成功した考えることができる。\\
+また、図\ref{hikaku_circle}〜\ref{hikaku_L}におけるMPM（ランダム性なし）とMPM（ランダム性あり）から、降伏条件からの分散を用いたランダム性の有無によるMPMシミュレーションの結果は変化しなかった。
+この結果から、本研究で用いた分散からのランダム性をMPMシミュレーションに追加することによるMPMシミュレーション結果への視覚的な影響はほとんどないことが確認できた。
+しかし、図\ref{hikaku_ansoku_star}では自由表面の傾きがDEMとMPM間で大きく異なっている。下図のような縦軸付近に集中している外れ値が影響して、αの値が大きくなり、MPMの安息角がDEMと比べて大きくなったと考えられる。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.3]{star_outlier.PNG}
+  \caption{星形2:2における応力プロット結果}
+  \label{hikaku_star}
+\end{figure}
+
+
+\clearpage
+
+\section{結論}
+この章では、提案手法を用いた実験結果から得られた結論と、今後の課題について述べる。
+\subsection{結論}
+本研究では、DEMとMPMによる応力変化をシミュレーションから算出し比較することで、DEMに対応した塑性流動モデルを取得する手法を提案した。
+また、36パターンの崩壊シミュレーションから得られた応力データを用いて、6種類の形状に対しての応力プロットの確認と塑性流動モデルの算出をおこなった。
+その結果、降伏条件は境界となる直線に集中して分布しているのではなく、直線から離れて分布していることが確認できた。また、直線と塑性流動後の分散値から形状ごとにその分布が異なることが確認できた。\\
+さらに、座標平均による解析によって得たαによって個別要素法を用いた結果と近い自由表面の傾きを再現することができた。以上のことから、一般形状に対応した塑性流動モデルをそれぞれ取得できたといえる。
+
+
+\subsection{今後の課題}
+本研究では、粉体の基本形状についての個別要素法に対応したモデルの取得に成功した。今後の課題としては、本研究で提案した一般化した「連続体モデル」と一般化済みの「個別要素法」による連成シミュレーションをおこない、
+ハイブリッドな手法で球以外の形状を扱うことができるか確認することが挙げられる。\\
+また、本研究では形状ごとに応力プロットの分布が大きく異なることが確認できた。その分布を学習したのち、MPMシミュレーションに組み込むことが課題として挙げられる。
+
+\clearpage
+
+\section*{謝辞}
+\addcontentsline{toc}{section}{謝辞}
+本研究を進めるにあたり、青山学院大学 理工学研究科 楽 詠コウ教授には、指導教員として終始適切なご指導をいただきました。厚く御礼申し上げます。
+また、白嶋　直人氏、濱道　光希氏にもご協力いただき本当にお世話になりました。
+加えて本研究の遂行にあたり、実験データの取得に協力いただいた楽研究室の皆様にも心より感謝いたします。
+
+\newpage
+
+\section*{参考文献}
+\addcontentsline{toc}{section}{参考文献}
+\renewcommand{\labelenumi}{[\arabic{enumi}]}
+\begin{enumerate}
+\item Peter A. Cundall and Otto D. L. Strack. 1979. A discrete numerical model for granular assemblies. Géotechnique 29, 1 (1979), 47-65.
+\item Jason Alfredo Carlson Gallas, Hans Jürgen Herrmann, and Stefan Sokołowski. 1992. Convection cells in vibrating granular media. Physical Review Letters 69, 9 (1992), 1371.
+\item Peter K. Haff and Bradley T. Werner. 1986. Computer simulation of the mechanical sorting of grains. Powder Technology 48, 3 (1986), 239-245.
+\item Thorsten Pöschel and Thomas Schwager. 2005. Computational Granular Dynamics:Models and Algorithms. Springer Science \& Business Media.
+\item Otis R. Walton and Robert L. Braun. 1986. Viscosity, granular-temperature, and stress calculations for shearing assemblies of inelastic, frictional disks. Journal of Rheology 30, 5 (1986), 949-980.
+\item Yonghao Yue, Breannan Smith, and Peter Yichen Chen. 2018 Hybrid grains: adaptive coupling of discrete and continuum simulations of granular media. ACM Transactions on Graphics(Proceedings of SIGGRAPH Asia 2018)37 (Dec.), 283:1–283:19
+\item Gergely Kl´ar, Theodore Gast, Andre Pradhana, Chuyuan Fu, Craig Schroeder, Chenfanfu Jiang, and Joseph Teran. 2016. Drucker-prager elastoplasticity for sand animation. ACM Trans. Graph. 35, 4, Article 103 (July 2016), 12 pages. \\ https://doi.org/10.1145/2897824.2925906
+\item Zhu K, He X, Li S, Wang H, Wang G. Shallow Sand Equations: Real-Time Height Field Simulation of Dry Granular Flows. IEEE Trans Vis Comput Graph. 2021;27(3):2073-2084. doi:10.1109/TVCG.2019.2944172
+\item Chenfanfu Jiang, Craig Schroeder, Andrew Selle, Joseph Teran, and Alexey Stomakhin. 2015. The affine particle-in-cell method. ACM Trans. Graph. 34, 4, Article 51 (August 2015), 10 pages.\\ https://doi.org/10.1145/2766996
+\item Tetsuya Takahashi and Christopher Batty. 2021. FrictionalMonolith: a monolithic optimization-based approach for granular flow with contact-aware rigid-bodycoupling. ACM Trans. Graph. 40, 6, Article 206 (December 2021), 20 pages. https://doi.org/10.1145/3478513.3480539
+\item Sulsky, D., ZHOU, S.-J., AND SCHREYER, H. L. 1995. Application of a Particle-in-Cell Method to Solid Mechanics. Computer Physics Communications 87, 1-2 (may), 236-252.
+\item Danny M. Kaufman, Shinjiro Sueda, Doug L. James, and Dinesh K. Pai. 2008. Staggered projections for frictional contact in multibody systems. In ACM SIGGRAPH Asia 2008 papers (SIGGRAPH Asia ’08). Association for Computing Machinery, New York, NY, USA, Article 164, 1–11. \\ https://doi.org/10.1145/1457515.1409117
+\item Richard Tonge, Feodor Benevolenski, and Andrey Voroshilov. 2012. Mass splitting for jitter-free parallel rigid body simulation. ACM Trans. Graph. 31, 4, Article 105 (July 2012), 8 pages.\\ https://doi.org/10.1145/2185520.2185601
+\item Kenny Erleben. 2007. Velocity-based shock propagation for multibody dynamics animation. ACM Trans. Graph. 26, 2 (June 07), 12–es.\\ https://doi.org/10.1145/1243980.1243986
+\item Iv´an Aldu´an and Miguel A. Otaduy. 2011. SPH granular flow with friction and cohesion. In Proceedings of the 2011 ACM SIGGRAPH/Eurographics Symposium on Computer Animation (SCA ’11).\\
+Association for Computing Machinery, New York, NY, USA, 25–32. https://doi.org/10.1145/2019406.2019410
+\item Nathan Bell, Yizhou Yu, and Peter J. Mucha. 2005. Particle-based simulation of granular materials. In Proceedings of the 2005 ACM SIGGRAPH/Eurographics symposium on Computer animation (SCA ’05). Association for Computing Machinery, New York, NY, USA, 77–86.\\ https://doi.org/10.1145/1073368.1073379
+\item Harald Kruggel-Emden, Erdem Simsek, Stefan Rickelt, Siegmar Wirtz, and Viktor Scherer. 2007. Review and extension of normal force models for the discrete element method. Powder Technology 171, 3 (2007), 157-173.
+\item Ahmed A. Shabana. 2013. Dynamics of multibody systems. Cambridge university press. J. Shäfer, S. Dippel, and D. E. Wolf. 1996. Force schemes in simulations of granular materials. Journal de Physique I 6, 1 (1996), 5-20.
+\item  海老澤 一樹. 吉田 伊吹. 楽 詠コウ. 2022. 個別要素法と連続体モデリングによる一般形状の粒状物質のシミュレーション
+\item Christoffersen, J., Mehrabadi, M. M., and Nemat-Nasser, S. (June 1, 1981). ”A Micromechanical Description of Granular Material Behavior.” ASME. J. Appl. Mech. June 1981; 48(2): 339–344.\\ https://doi.org/10.1115/1.3157619
+
+\end{enumerate}
+
+\newpage
+\addcontentsline{toc}{section}{付録}
+\section*{付録}
+\subsection*{発表時に頂いた質問への回答}
+Q.応力プロットのグラフはどう見ればいいのか？縦横軸は？右の図は繋いだものだが，左はどう解釈？\\
+A.\\\\
+\begin{figure}[htbp]
+  \centering
+  \includegraphics*[keepaspectratio, scale=0.3]{syuron_stress_plot.PNG}
+  \caption{応力プロットの全体図（左の図）と応力プロットの拡大図（右の図）}
+\end{figure}
+
+
+Q.36通り試したということだが，一つ一つについて，粒径のパラメータ等を変えても予測できると考えられるか？\\
+A.\\\\
+Q.粒径によって定義する点の数が違うはず．計算量は粒径によって全然違うか？\\
+A.\\\\
+Q.より一般的なモデルを扱うために、球体以外の形状について解析を行っていましたが、ここからさらに一般化するためには解析する形状の種類を増やしていくのでしょうか。あるいは、複数の形状が混ざった分類が難しいようなものについて解析を行っていくのでしょうか。今後の展望についてご意見をお聞かせください。\\
+A.\\
+
+
+
+\end{document}

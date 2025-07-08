@@ -1,0 +1,7 @@
+<homogenize_stress>
+  <elements templates="Save/square_merge_template.h5" forces="Save/serialized_forces.h5" MPMstress = "Save/serialized_sigma.h5"/>
+  <stress pre_stress = "MPMstress/MPM.h5" post_stress = "DEMstress/DEM.h5" stress_pair = "Save/stress_pair.h5"/>
+  <resume resume_fn = "DEM_test_resume.xml" resume_MPM_fn = "herschel_bulkley.xml" interval = "0.00001"/>
+  <outlier packing_fraction_threshold = "1.2" distance_from_wall_threshold = "0.13"/>
+  <grid h = "0.04" grid_start = ""/>
+</homogenize_stress>

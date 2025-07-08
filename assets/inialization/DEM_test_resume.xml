@@ -1,0 +1,7 @@
+<rigidbody2d>
+  <integrator dt="0.000001" dx="0.004" dx_sample_points="0.004" ugrd_dx="0.04" max_time="0.23630800000021565" />
+  <penalty_impact_map kN="177209.38760736626" gammaN="46.1802" kT="4784653.465398889" gammaT="46.1802" mu="0.5" />
+  <near_earth_gravity g="0.0 -9.81" />
+  <resume templates="Save/square_merge_template.h5" objects="Save/resumefile.h5" />
+  <serialization interval="0.000001" folder="Save" objects="resumefile.h5" serialize_forces="1" forces="serialized_forces.h5" />
+</rigidbody2d>

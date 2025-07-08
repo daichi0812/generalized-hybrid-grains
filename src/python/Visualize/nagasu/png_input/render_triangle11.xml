@@ -1,0 +1,4 @@
+<AGGrainRender2D>
+  <input templates = "./IOData/Triangle/11/triangle11_template.h5" elements = "./IOData/Triangle/11/output/objects_%06d.h5" bb = "-0.05 -0.05 0.75 0.75" start = "0" end = "-1"/>
+  <output type = "png" size = "1280 1280" folder = "./png/png_triangle11"/>
+</AGGrainRender2D>

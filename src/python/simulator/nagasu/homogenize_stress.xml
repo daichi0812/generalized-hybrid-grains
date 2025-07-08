@@ -1,0 +1,9 @@
+<homogenize_stress>
+  <elements templates="Save_circle22_flow/circle22_flow_template.h5" forces="Save_circle22_flow/serialized_forces.h5" MPMstress="Save_circle22_flow/serialized_sigma.h5" />
+  <stress pre_stress="MPMstress/MPM.h5" post_stress="DEMstress/DEM.h5" stress_pair="Save_circle22_flow/stress_pair.h5" strain="DEMstress/DEM2.h5" />
+  <resume resume_fn="DEM_test_resume.xml" resume_MPM_fn="herschel_bulkley.xml" interval="0.001" />
+  <outlier packing_fraction_threshold="1.0" distance_from_wall_threshold="0.03" />
+  <grid h="0.04" grid_start="" />
+  <rolling base_elem="Rolling_circle22_flow/element_data.h5" base_stress="Rolling_circle22_flow/stress_pair.h5" rolling_time="0.5" next_time="1.500000" />
+  <test mode="0" processing_time="Save_heptagon_025_05/processing_python_time.csv" homogenize_time="Save_heptagon_025_05/homogenize_time.csv" />
+</homogenize_stress>

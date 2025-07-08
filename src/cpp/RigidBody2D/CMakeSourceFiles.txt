@@ -1,0 +1,31 @@
+set( Sources
+  ./CircleTemplate2D.cpp
+  ./collisiondetection2d.cpp
+  ./main.cpp
+  ./PolygonTemplate2D.cpp
+  ./RigidBody2DData.cpp
+  ./ShapeTemplate2D.cpp
+  ./signeddistance2d.cpp
+  ./simulator.cpp
+  ./uniformgrid2d.cpp
+  ./xmlparser.cpp
+)
+
+set( Headers
+  ./ForceData2D.h
+  ./CircleTemplate2D.h
+  ./collisiondetection2d.h
+  ./collisionsample2d.h
+  ./CompileDefinitions.h
+  ./constants.h
+  ./DiscreteElement2D.h
+  ./HDF5io.h
+  ./PolygonTemplate2D.h
+  ./RigidBody2DData.h
+  ./settings.h
+  ./ShapeTemplate2D.h
+  ./signeddistance2d.h
+  ./simulator.h
+  ./uniformgrid2d.h
+  ./xmlparser.h
+)

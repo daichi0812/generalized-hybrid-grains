@@ -1,0 +1,4 @@
+<AGGrainRender2D>
+  <input templates = "./IOData/Square/22/square22_template.h5" elements = "./IOData/Square/22/output/objects_%06d.h5" bb = "-0.05 -0.05 0.75 0.75" start = "0" end = "2000"/>
+  <output type = "png" size = "1280 1280" folder = "./png/png_square22"/>
+</AGGrainRender2D>

@@ -1,0 +1,4 @@
+<AGGrainRender2D>
+  <input templates = "/Users/user/Downloads/NoOMPEnv/GeneralizedHybridGrainsResearch/src/cpp/RigidBody2D/build/Release/Load/circle_025_025_template.h5" elements = "/Users/user/Downloads/NoOMPEnv/GeneralizedHybridGrainsResearch/src/cpp/RigidBody2D/build/Release/Save/objects_%06d.h5" bb = "-0.05 -0.05 0.75 0.4" start = "0" end = "-1"/>
+  <output type = "png" size = "1280 720" folder = "/Users/user/Downloads/NoOMPEnv/GeneralizedHybridGrainsResearch/src/cpp/RigidBody2D/build/Release/png"/>
+</AGGrainRender2D>
