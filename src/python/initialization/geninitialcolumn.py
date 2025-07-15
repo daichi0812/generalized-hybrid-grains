@@ -406,6 +406,10 @@ class Ui_Widget(QtWidgets.QWidget):
             return 0.5 * area
 
     def acceptTempElems(self, temp_elem_list, temp_bb_sizes, temp_width, temp_height, left, bottom, width):
+        # リストが空の場合は何もせずに処理を抜ける
+        if not temp_elem_list:
+            return
+
         space_x_per_elem = (width - temp_width) / len(temp_elem_list)
         for i in range(len(temp_elem_list)):
             e_ = copy.deepcopy(temp_elem_list[i])

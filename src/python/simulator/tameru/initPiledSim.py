@@ -22,7 +22,7 @@ def main():
     
 
     if not(os.path.isdir(save_folder_name)):
-        os.mkdir(save_folder_name)
+        os.makedirs(save_folder_name, exist_ok=True)
 
     #DEM書き換え
     DEM_fn =  args[4]
