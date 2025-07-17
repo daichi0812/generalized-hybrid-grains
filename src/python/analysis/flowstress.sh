@@ -17,12 +17,16 @@ do
 
   ./rigidbody2dsim DEM_test_resume.xml
 
+# demから連続する前後フレーム（２フレーム）の応力分布１と２の均質化をしている？
   python ${Prefix}/allstepHomogenizer.py homogenize_stress.xml
 
+# スタート時点（応力分布1）の応力データを使って、mpmで弾性体と仮定した時の応力(応力分布2')を算出する？
   ./MPM2D herschel_bulkley.xml
 
+# 応力分布2'の均質化をしている？
   python ${Prefix}/allstepMPMBeforeflow.py homogenize_stress.xml
 
+# 応力分布2と2'とでペアを作って、塑性流動データとする
   python ${Prefix}/storeStressPair.py homogenize_stress.xml
 
   # 使い終わった全ステップの力のデータを削除する
