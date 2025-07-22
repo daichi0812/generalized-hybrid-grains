@@ -391,7 +391,7 @@ python mergetool.py
 ``` 
 Loadを押し、前工程である「壁の生成」と「粒子の生成」で作成した壁と粒子のファイルをどちらもLoadする。 
 この時ファイルを選ぶ順番は、boundary_template.h5, boundary.h5, particle_template.h5, particle.h5のようにtemplateが付くものから先に選択しないとクラッシュする。
-Saveを押し、名前を付けファイルを保存
+Saveを押し、名前を付けファイルを保存（例: circle11_template.h5, circle11.h5)
 
 ---
 
@@ -403,10 +403,15 @@ cd Simulator/tameru
 
 - 入力ファルダの作成
 ここでは、シーケンシャルに実行するためにファイルを配置する方法を説明する。
-現状では、  
-IOData/形状名/比/形状名+比(_template).h5  
-ex)IOData/Circle/11/circle11.h5  
-というファイルの配置方法になっている。<br><br>
+
+入出力を行うためのディレクトリを用意する(既にある場合もある)
+```bash
+src/python/simulator/tameru/IOData/"形状名"/"比率"
+# 例
+src/python/simulator/tameru/IOData/Circle/11
+```
+上記のディレクトリに、[貯めるの環境作成](#貯めるの環境作成) の「4.壁と粒子の結合」の際に保存した2つのhdfファイルをコピーする。
+
 - シーケンシャルにおこなうための設定  
 実験設定応じて、Simulator/tameru/piledSimulationLoop_python.pyのコードを以下のように書き換える.  
     - RUN_NUMに実行するファイル数を指定  

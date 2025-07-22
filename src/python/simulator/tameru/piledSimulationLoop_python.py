@@ -182,11 +182,14 @@ input()
 
 import subprocess
 for i in np.arange(0,RUN_NUM):
+    # ① 生成フェーズ -----------------------------
     run_list = [PYTHON_PATH, "initPiledSim.py", WORKING_DIR[i], OBJECT_FILE[i], TEMPLATE_FILE[i], "DEM_test.xml"]
     print("run_list",run_list)
     subprocess.run(run_list)
-    # run_list = ["./rigidbody2dsim.exe", "DEM_test.xml"]
-    # ubuntu, macの場合、.exeを削除
-    run_list = ["DEM_test.xml"]
+
+    # ② 計算フェーズ -----------------------------
+    # ソルバー実行ファイルのパスを指定
+    DEM_BIN = "./rigidbody2dsim"
+    run_list = [DEM_BIN, "DEM_test.xml"]
     print("run_list",run_list)
     subprocess.run(run_list)
