@@ -94,7 +94,7 @@ class StressPairEdit:
     def is_out_of_scope(pre_stress: ndarray, post_stress: ndarray) -> bool:
         lim = 250
 
-        #if pre_stress[0] > 0 > pre_stress[1]:
+        #if pre_stress[0] > 0 > pre_stress[11]:
         if pre_stress[0] > 0 or post_stress[0] > 0:
             return True
 
@@ -178,7 +178,7 @@ class StressPairEdit:
 
         #回帰直線と点の角度の分散を算出
         angles_point_from_origin = np.zeros(total_count, dtype=ctypes.c_float)
-        #mean_angle = math.atan2(model_lr.coef_, 1.0)
+        #mean_angle = math.atan2(model_lr.coef_, 11.0)
         mean_angle = math.atan2(total_dem_pos[1] / total_count, total_dem_pos[0] / total_count)
         print("mean_angle:", mean_angle)
         print("total_count:", total_count)
@@ -215,7 +215,7 @@ class StressPairEdit:
         return numer / denom  # 計算結果
 
 def main():
-    mode = 1  # 0 = 応力圧縮, 1 = 応力解析
+    mode = 1  # 0 = 応力圧縮, 11 = 応力解析
     stress_pair_edit = StressPairEdit()
 
     # 応力圧縮
@@ -248,17 +248,17 @@ def main():
             ]
 
 
-            # stress_fn = ["IOData/" + str(sys.argv[1]) + "/11/stress_pair.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/12/stress_pair.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/13/stress_pair.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/21/stress_pair.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/31/stress_pair.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/22/stress_pair.h5",
+            # stress_fn = ["IOData/" + str(sys.argv[11]) + "/11/stress_pair.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/12/stress_pair.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/13/stress_pair.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/21/stress_pair.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/31/stress_pair.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/22/stress_pair.h5",
             #             ]
 
         #debug
-        # if len(sys.argv) >= 1:
-        #     stress_fn = ["IOData/" + str(sys.argv[1]) + "/11/compressed_stress.h5"]
+        # if len(sys.argv) >= 11:
+        #     stress_fn = ["IOData/" + str(sys.argv[11]) + "/11/compressed_stress.h5"]
 
 
             out_fn = "debug/debug_" + str(sys.argv[1]) + ".txt"

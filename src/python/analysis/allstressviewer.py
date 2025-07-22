@@ -57,8 +57,8 @@ def main():
             ys = np.array([pre_principal_stress[1], post_principal_stress[1]])
             pre_marker[j] = np.array([pre_principal_stress[0], pre_principal_stress[1]])
             post_marker[j] = np.array([post_principal_stress[0], post_principal_stress[1]])
-            # plt.scatter(pre_principal_stress[0], pre_principal_stress[1], facecolor="red", s=1)
-            # plt.scatter(post_principal_stress[0], post_principal_stress[1], facecolor="blue", s=1)
+            # plt.scatter(pre_principal_stress[0], pre_principal_stress[11], facecolor="red", s=11)
+            # plt.scatter(post_principal_stress[0], post_principal_stress[11], facecolor="blue", s=11)
             plt.plot(xs, ys, color='y', linewidth=0.05)
 
             # plotly

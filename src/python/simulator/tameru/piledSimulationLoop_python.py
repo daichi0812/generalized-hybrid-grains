@@ -2,17 +2,20 @@ import numpy as np
 
 PYTHON_PATH="python"
 
+# 実行するファイル数を指定
 RUN_NUM=1
 
-# set working directory
+# set working directory(読みこむファイルがあるディレクトリを指定)
 WORKING_DIR = []
 for i in np.arange(0,RUN_NUM):
     WORKING_DIR.append("")
 """
 WORKING_DIR[0]="./IOData/Circle/22/"
-WORKING_DIR[1]="./IOData/Circle/11/"
+WORKING_DIR[11]="./IOData/Circle/11/"
 """
-WORKING_DIR[0]="./IOData/Circle/12/"
+# WORKING_DIR[0]="./IOData/Circle/12/"
+WORKING_DIR[0]="./IOData/Square/11/"
+
 """
 WORKING_DIR[3]="./IOData/Circle/13/"
 WORKING_DIR[4]="./IOData/Circle/21/"
@@ -61,9 +64,11 @@ for i in np.arange(0,RUN_NUM):
     OBJECT_FILE.append("")
     """
 OBJECT_FILE[0]="circle22.h5"
-OBJECT_FILE[1]="circle11.h5"
+OBJECT_FILE[11]="circle11.h5"
 """
-OBJECT_FILE[0]="circle12.h5"
+# OBJECT_FILE[0]="circle12.h5"
+OBJECT_FILE[0]="square11.h5"
+
 """
 OBJECT_FILE[3]="circle13.h5"
 OBJECT_FILE[4]="circle21.h5"
@@ -111,9 +116,11 @@ for i in np.arange(0,RUN_NUM):
     TEMPLATE_FILE.append("")
     """
 TEMPLATE_FILE[0]="circle22_template.h5"
-TEMPLATE_FILE[1]="circle11_template.h5"
+TEMPLATE_FILE[11]="circle11_template.h5"
 """
-TEMPLATE_FILE[0]="circle12_template.h5"
+# TEMPLATE_FILE[0]="circle12_template.h5"
+TEMPLATE_FILE[0]="square11_template.h5"
+
 """
 TEMPLATE_FILE[3]="circle13_template.h5"
 TEMPLATE_FILE[4]="circle21_template.h5"
@@ -178,6 +185,8 @@ for i in np.arange(0,RUN_NUM):
     run_list = [PYTHON_PATH, "initPiledSim.py", WORKING_DIR[i], OBJECT_FILE[i], TEMPLATE_FILE[i], "DEM_test.xml"]
     print("run_list",run_list)
     subprocess.run(run_list)
-    run_list = ["./rigidbody2dsim.exe", "DEM_test.xml"]
+    # run_list = ["./rigidbody2dsim.exe", "DEM_test.xml"]
+    # ubuntu, macの場合、.exeを削除
+    run_list = ["DEM_test.xml"]
     print("run_list",run_list)
     subprocess.run(run_list)

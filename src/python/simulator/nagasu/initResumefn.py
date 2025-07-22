@@ -74,7 +74,7 @@ def main():
         os.remove(resume_MPM_root[6].attrib["processing_time"])
     if os.path.isfile(root[6].attrib["homogenize_time"]):
         os.remove(root[6].attrib["homogenize_time"])
-    if root[6].attrib["mode"] == "1":
+    if root[6].attrib["mode"] == "11":
         pathlib.Path(root[6].attrib["processing_time"]).touch()
         pathlib.Path(resume_root[4].attrib["processing_time"]).touch()
         pathlib.Path(resume_MPM_root[6].attrib["processing_time"]).touch()

@@ -576,10 +576,10 @@ class Ui_Widget(QtWidgets.QWidget):
 
     def load(self):
         # template beforeflow step
-        (template_fn1, selectedFilter) = QtWidgets.QFileDialog.getOpenFileName(self, "Load n-1 templates", os.path.expanduser('~'), "HDF5 (*.h5)" )
+        (template_fn1, selectedFilter) = QtWidgets.QFileDialog.getOpenFileName(self, "Load n-11 templates", os.path.expanduser('~'), "HDF5 (*.h5)" )
 
         # elements beforeflow step
-        (element_fn1, selectedFilter) = QtWidgets.QFileDialog.getOpenFileName(self, "Load n-1 elements", os.path.expanduser('~'), "HDF5 (*.h5)" )
+        (element_fn1, selectedFilter) = QtWidgets.QFileDialog.getOpenFileName(self, "Load n-11 elements", os.path.expanduser('~'), "HDF5 (*.h5)" )
 
         # elements afterflow step
         (element_fn2, selectedFilter) = QtWidgets.QFileDialog.getOpenFileName(self, "Load n elements", os.path.expanduser('~'), "HDF5 (*.h5)" )

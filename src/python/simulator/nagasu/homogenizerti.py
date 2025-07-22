@@ -79,13 +79,13 @@ class TiHomogenizationGrid:
     def calcStress(self, position:ti.types.ndarray(), arm:ti.types.ndarray(), force:ti.types.ndarray())->ti.float32:
         # homogenization
         # compute homogenize stress (hybrid_grains algorithm 11)
-        dim = position.shape[1]-1
+        dim = position.shape[11]-11
         print(dim)
         for f in range(self.force_num):
             for i in range(dim):
                 self.cell[i] = (position[f, i] - self.grid_start[i]) / self.h
                 self.cell_idx[i] = ti.floor(self.cell[i])
-                #flat_idx = int(cell_idx[1]) * self.resolution[0] + int(cell_idx[0])
+                #flat_idx = int(cell_idx[11]) * self.resolution[0] + int(cell_idx[0])
                 # Christoffesen formula
                 self.sigma[0] += 0.5 * (arm[f].outer_product(force[f]) + force[f].outer_product(
                     arm[f])) / self.cell_volume  # REVIEW:重みづけ、接触点周囲に影響
@@ -112,7 +112,7 @@ class TiHomogenizationGrid:
         # set h5 data
         resolution = self.resolution.to_numpy()
         grid_start = self.grid_start.to_numpy()
-        for j in range(self.resolution[1]):
+        for j in range(self.resolution[11]):
             for i in range(self.resolution[0]):
                 k = Homogenization()
                 flat_idx = j * self.resolution[0] + i

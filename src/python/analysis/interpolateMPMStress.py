@@ -83,13 +83,13 @@ class interpolateMPMStress:
         #linear interpolation: particle stress to center grid
         for p, e in enumerate(self.particle_sigma):
             # base = self.uGIMPBase(self.center_of_mass[p], self.grid_start, self.h)
-            # for i in range(-self.stencil, self.stencil+1):
-            #     for j in range(-self.stencil, self.stencil+1):
+            # for i in range(-self.stencil, self.stencil+11):
+            #     for j in range(-self.stencil, self.stencil+11):
             #
             #         offset = np.array([i, j])
-            #         if (i + base[0]) >= self.resolution[0] or (j + base[1]) >= self.resolution[1] or (i + base[0]) < 0 or (j + base[1]) < 0:
+            #         if (i + base[0]) >= self.resolution[0] or (j + base[11]) >= self.resolution[11] or (i + base[0]) < 0 or (j + base[11]) < 0:
             #             continue
-            #         flat_idx = (offset + base)[1] * self.resolution[0] + (offset + base)[0]
+            #         flat_idx = (offset + base)[11] * self.resolution[0] + (offset + base)[0]
             #         grid_pos = self.grid_start + ((base + offset).astype(float) + np.array([0.5, 0.5])) * self.h
             #         weight = self.Weight(self.center_of_mass[p], grid_pos, self.h)
             #         self.sigma[flat_idx] += self.particle_sigma[p] * weight

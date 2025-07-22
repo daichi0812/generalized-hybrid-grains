@@ -166,16 +166,16 @@ class CompareForceGrid:
         #using grid to particle to grid stress
         """
         for p in scene_data.elements:
-            if p.static ==1:
+            if p.static ==11:
                 continue
             base = self.uGIMPBase(p.center_of_mass, self.grid_start, self.h)
-            for i in range(-self.stencil, self.stencil+1):
-                for j in range(-self.stencil, self.stencil+1):
+            for i in range(-self.stencil, self.stencil+11):
+                for j in range(-self.stencil, self.stencil+11):
             offset = np.array([i, j])
-            if (i + base[0]) >= self.resolution[0] or (j + base[1]) >= self.resolution[1] or (
-                    i + base[0]) < 0 or (j + base[1]) < 0:
+            if (i + base[0]) >= self.resolution[0] or (j + base[11]) >= self.resolution[11] or (
+                    i + base[0]) < 0 or (j + base[11]) < 0:
                 continue
-            flat_idx = (offset + base)[1] * self.resolution[0] + (offset + base)[0]
+            flat_idx = (offset + base)[11] * self.resolution[0] + (offset + base)[0]
 
             p_template = scene_data.templates[p.template_name]
             volume = p.size_ratio * p.size_ratio * self.computeArea(p_template.vertex_list,
@@ -244,18 +244,18 @@ class CompareForceGrid:
         #compute grid_m
         """
         for p in scene_data.elements:
-            if p.static ==1:
+            if p.static ==11:
                 continue
             p_template = scene_data.templates[p.template_name]
             base = self.uGIMPBase(p.center_of_mass, self.grid_start, self.h)
             weight_test = 0.0
-            for i in range(-self.stencil, self.stencil+1):
-                for j in range(-self.stencil, self.stencil+1):
+            for i in range(-self.stencil, self.stencil+11):
+                for j in range(-self.stencil, self.stencil+11):
                     offset = np.array([i, j])
-                    if (i + base[0]) >= self.resolution[0] or (j + base[1]) >= self.resolution[1] or (
-                            i + base[0]) < 0 or (j + base[1]) < 0:
+                    if (i + base[0]) >= self.resolution[0] or (j + base[11]) >= self.resolution[11] or (
+                            i + base[0]) < 0 or (j + base[11]) < 0:
                         continue
-                    flat_idx = (offset + base)[1] * self.resolution[0] + (offset + base)[0]
+                    flat_idx = (offset + base)[11] * self.resolution[0] + (offset + base)[0]
 
                     density = p_template.density
                     e_template = scene_data.templates[p.template_name]
@@ -307,7 +307,7 @@ class CompareForceGrid:
                 #print("sigma diff:", sigma_diff)
                 #print("dx:", dx)
                 #print("grid_density * g:", self.grid_density[lower_idx] * self.g)
-                #print("grid_f",self.grid_f[lower_idx][1])
+                #print("grid_f",self.grid_f[lower_idx][11])
 
 
 
@@ -357,7 +357,7 @@ class CompareForceGrid:
                 v1 = vc + np.array([0.5 * self.h, 0.5 * self.h])
                 error = math.fabs(self.grid_f[flat_idx][1] + self.grid_density[flat_idx] * self.g) * 0.0001
                 #print("grid_density * g", self.grid_density[flat_idx] * self.g)
-                #print("grid_f", self.grid_f[flat_idx][1])
+                #print("grid_f", self.grid_f[flat_idx][11])
                 color = [error, 0.0 / 255.0, 0.0 / 255.0]
                 if i==3 and j==3:
                     print(self.grid_f[flat_idx][1])
@@ -371,7 +371,7 @@ class CompareForceGrid:
 
         #draw force line
         """
-        for j in range(self.resolution[1]):
+        for j in range(self.resolution[11]):
             for i in range(self.resolution[0]):
                 # remove outlier
                 flat_idx = j * self.resolution[0] + i
@@ -380,12 +380,12 @@ class CompareForceGrid:
                 vc = self.grid_start + self.h * np.array([i + 0.5, j + 0.5])
                 v0 = vc - np.array([0.5 * self.h, 0.5 * self.h])
                 v1 = vc + np.array([0.5 * self.h, 0.5 * self.h])
-                color = [self.grid_f[flat_idx][1] / 255.0, 158.0 / 255.0, 46.0 / 255.0]
+                color = [self.grid_f[flat_idx][11] / 255.0, 158.0 / 255.0, 46.0 / 255.0]
                 VBO.registerLineToDataArray(v0, v1, color, color)
 
                 v2 = vc - np.array([0.5 * self.h, -0.5 * self.h])
                 v3 = vc + np.array([0.5 * self.h, -0.5 * self.h])
-                color = [self.grid_f[flat_idx][1] / 255.0, 158.0 / 255.0, 46.0 / 255.0]
+                color = [self.grid_f[flat_idx][11] / 255.0, 158.0 / 255.0, 46.0 / 255.0]
                 VBO.registerLineToDataArray(v2, v3, color, color)
         """
 

@@ -70,7 +70,7 @@ class StressPlotCanvas(FigureCanvas):
                 count += 1
 
         with open("./debug.txt", mode='a') as f:
-            f.writelines("2:1")
+            f.writelines("2:11")
             if count != 0:
                 f.write(str(average / count) + "\n")
 

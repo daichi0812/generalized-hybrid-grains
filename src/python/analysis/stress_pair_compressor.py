@@ -175,7 +175,7 @@ class StressPairEdit:
 
 
 def main():
-    mode = 1  # 0 = 応力圧縮, 1 = 応力解析
+    mode = 1  # 0 = 応力圧縮, 11 = 応力解析
     stress_pair_edit = StressPairEdit()
 
     # 応力圧縮

@@ -59,7 +59,7 @@ def main():
     MPM_root[5].attrib["templates"] = Save_folder_name + "/" + shape_ratio_name + "_template.h5"
     MPM_root[5].attrib["forces"] = Save_folder_name + "/" + "serialized_forces.h5"
     MPM_root[6].attrib["folder"] = Save_folder_name
-    if MPM_root[6].attrib["mode"] == "1":
+    if MPM_root[6].attrib["mode"] == "11":
         MPM_root[6].attrib["processing_time"] = Save_folder_name + "/MPM_Processing_Time_" + shape_ratio_name + ".csv"
 
     MPM_tree.write(MPM_fn)

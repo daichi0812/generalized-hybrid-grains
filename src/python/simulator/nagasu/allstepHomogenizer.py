@@ -19,7 +19,7 @@ tree = ET.parse(resume_xml_fn)
 root = tree.getroot()
 
 #処理時間を開始
-if root[6].attrib["mode"] == "1":
+if root[6].attrib["mode"] == "11":
     processing_time_fn = root[6].attrib["processing_time"]
     start_time = time.perf_counter_ns()
 
@@ -97,7 +97,7 @@ allhomogenization_data.save(filename)
 strain_data.save(strain_fn)
 
 #処理時間計測を終了
-if root[6].attrib["mode"] == "1":
+if root[6].attrib["mode"] == "11":
     end_time = time.perf_counter_ns()
     with open(processing_time_fn, 'a') as f:
         print((end_time - start_time) / 1000000.0, file=f)

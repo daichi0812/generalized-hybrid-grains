@@ -169,18 +169,18 @@
     
     # ソースのダウンロード・展開
     wget ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
-    tar xvfz libffi-3.2.1.tar.gz
+    tar xvfz libffi-3.2.11.tar.gz
 
     # インストール
-    cd libffi-3.2.1
+    cd libffi-3.2.11
     ./configure --prefix=$HOME/local/libffi/3_2_1
     make
     make install
 
     # パスを通す
     mkdir -p ~/local/include
-    ln -s $HOME/local/libffi/3_2_1/lib/libffi-3.2.1/include/ffi.h $HOME/local/include/
-    ln -s $HOME/local/libffi/3_2_1/lib/libffi-3.2.1/include/ffitarget.h $HOME/local/include/
+    ln -s $HOME/local/libffi/3_2_1/lib/libffi-3.2.11/include/ffi.h $HOME/local/include/
+    ln -s $HOME/local/libffi/3_2_1/lib/libffi-3.2.11/include/ffitarget.h $HOME/local/include/
 
     mkdir -p ~/local/lib
     ln -s $HOME/local/libffi/3_2_1/lib/libffi.a $HOME/local/lib/

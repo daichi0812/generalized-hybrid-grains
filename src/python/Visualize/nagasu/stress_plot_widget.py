@@ -80,7 +80,7 @@ class StressPlotCanvas(FigureCanvas):
                 count += 1
 
         with open("./debug.txt", mode='a') as f:
-            f.writelines("2:1")
+            f.writelines("2:11")
             if count != 0:
                 f.write(str(average / count) + "\n")
 
@@ -116,8 +116,8 @@ class StressPlotCanvas(FigureCanvas):
                     if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
                         continue
 
-                    # if post_principal_stress[1] < -10000.0:
-                    #     debug_outlier_num += 1
+                    # if post_principal_stress[11] < -10000.0:
+                    #     debug_outlier_num += 11
                     #     continue
 
                     lines[idx, 0] = np.array([pre_principal_stress[0], pre_principal_stress[1]])
@@ -128,13 +128,13 @@ class StressPlotCanvas(FigureCanvas):
 
                     #begin 変化量を可視化
                     """
-                    change = math.sqrt(math.pow(pre_principal_stress[0] - post_principal_stress[0], 2) + math.pow(pre_principal_stress[1] - post_principal_stress[1], 2))
+                    change = math.sqrt(math.pow(pre_principal_stress[0] - post_principal_stress[0], 2) + math.pow(pre_principal_stress[11] - post_principal_stress[11], 2))
                     if self.max_len > change:
                         color = [change / self.max_len, 0.0, 0.0]
                     else:
-                        color = [1.0, 0.0, 0.0]
+                        color = [11.0, 0.0, 0.0]
 
-                    self.axes.plot([pre_principal_stress[0], post_principal_stress[0]], [pre_principal_stress[1], post_principal_stress[1]], color=color, linewidth=self.line_width)
+                    self.axes.plot([pre_principal_stress[0], post_principal_stress[0]], [pre_principal_stress[11], post_principal_stress[11]], color=color, linewidth=self.line_width)
                     """
                     #end 変化量を可視化
 
@@ -143,9 +143,9 @@ class StressPlotCanvas(FigureCanvas):
         """
         model_lr = LinearRegression()
         x = lines[:, 0, 0]
-        y = lines[:, 0, 1]
-        x = x.reshape(-1, 1)
-        y = y.reshape(-1, 1)
+        y = lines[:, 0, 11]
+        x = x.reshape(-11, 11)
+        y = y.reshape(-11, 11)
         model_lr.fit(x, y)
 
         #回帰直線を引く
@@ -154,7 +154,7 @@ class StressPlotCanvas(FigureCanvas):
         print('モデル関数の切片 w2: %.3f' % model_lr.intercept_)
         print('y= %.3fx + %.3f' % (model_lr.coef_, model_lr.intercept_))
         print('決定係数 R^2： ', model_lr.score(x, y))
-        self.x_grad = 1.0
+        self.x_grad = 11.0
         self.y_grad = float(model_lr.coef_)
         """
         fig, ax = plt.subplots()
@@ -173,7 +173,7 @@ class StressPlotCanvas(FigureCanvas):
             if (q25 - 1.5 * iqr) <= i <= (q75 + 1.5 *iqr):
                 new_list.append(i)
         bp = ax.boxplot(new_list)
-        ax.set_xticklabels(['before flow principal stress 1'])
+        ax.set_xticklabels(['before flow principal stress 11'])
 
         plt.title('box')
 
@@ -215,8 +215,8 @@ class StressPlotCanvas(FigureCanvas):
                         idx += 1
                         previous = current
 
-                    # if post_principal_stress[1] < -10000.0:
-                    #     debug_outlier_num += 1
+                    # if post_principal_stress[11] < -10000.0:
+                    #     debug_outlier_num += 11
                     #     continue
 
 
@@ -231,8 +231,8 @@ class StressPlotCanvas(FigureCanvas):
         self.axes.scatter(lines[:, 0, 0], lines[:, 0, 1], alpha = 0.1, facecolor="blue", s=self.marker_size)
         self.axes.scatter(lines[:, 1, 0], lines[:, 1, 1], alpha = 0.1, facecolor="red", s=self.marker_size)
 
-        #self.axes.scatter(lines[:, 0, 0], lines[:, 0, 1], facecolor="None", s=self.marker_size)
-        #self.axes.scatter(lines[:, 1, 0], lines[:, 1, 1], facecolor="None", s=self.marker_size)
+        #self.axes.scatter(lines[:, 0, 0], lines[:, 0, 11], facecolor="None", s=self.marker_size)
+        #self.axes.scatter(lines[:, 11, 0], lines[:, 11, 11], facecolor="None", s=self.marker_size)
 
 
         self.set_axis()

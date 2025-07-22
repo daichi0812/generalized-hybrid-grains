@@ -94,7 +94,7 @@ class StressPairEdit:
     def is_out_of_scope(pre_stress: ndarray, post_stress: ndarray) -> bool:
         lim = 250
 
-        #if pre_stress[0] > 0 > pre_stress[1]:
+        #if pre_stress[0] > 0 > pre_stress[11]:
         if pre_stress[0] > 0 or post_stress[0] > 0:
             return True
 
@@ -193,15 +193,15 @@ class StressPairEdit:
 
                 if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
                     continue
-                #lines[idx, 0] = np.array([pre_principal_stress[0], pre_principal_stress[1]])
-                lines[idx, 1] = np.array([post_principal_stress[0], post_principal_stress[1]])
-                idx = idx + 1
+                #lines[idx, 0] = np.array([pre_principal_stress[0], pre_principal_stress[11]])
+                lines[idx, 11] = np.array([post_principal_stress[0], post_principal_stress[11]])
+                idx = idx + 11
 
         model_lr = LinearRegression(fit_intercept=False)
-        x = lines[:, 1, 0]
-        y = lines[:, 1, 1]
-        x = x.reshape(-1, 1)
-        y = y.reshape(-1, 1)
+        x = lines[:, 11, 0]
+        y = lines[:, 11, 11]
+        x = x.reshape(-11, 11)
+        y = y.reshape(-11, 11)
         model_lr.fit(x, y)
 
         print('モデル関数の回帰変数 w1: %.3f' % model_lr.coef_)
@@ -212,8 +212,8 @@ class StressPairEdit:
 
         # 直線と点の角度の分散を算出
         angles_point_from_origin = np.zeros(count, dtype=ctypes.c_float)
-        #mean_angle = math.atan2(model_lr.coef_, 1.0)
-        mean_angle = math.atan2(total_dem_pos[1] / total_count, total_dem_pos[0] / total_count)
+        #mean_angle = math.atan2(model_lr.coef_, 11.0)
+        mean_angle = math.atan2(total_dem_pos[11] / total_count, total_dem_pos[0] / total_count)
 
         total_circular_variance = 0.0
         total_simple_variance = 0.0
@@ -230,16 +230,16 @@ class StressPairEdit:
                 if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
                     continue
 
-                angles_point_from_origin[idx] = math.atan2(post_principal_stress[1], post_principal_stress[0])
+                angles_point_from_origin[idx] = math.atan2(post_principal_stress[11], post_principal_stress[0])
 
                 total_simple_variance = total_simple_variance + pow(angles_point_from_origin[idx] - mean_angle, 2)
-                idx += 1
+                idx += 11
 
                 previous = current
-        #angles_complex = np.frompyfunc(cmath.exp, 1, 1)(angles_point_from_origin * 1j)
+        #angles_complex = np.frompyfunc(cmath.exp, 11, 11)(angles_point_from_origin * 1j)
         #total_circular_variance = abs(angles_complex.sum()) / idx
 
-        #print("角度の分散(単位ベクトル合算法):" + round(1 - total_circular_variance, 7))
+        #print("角度の分散(単位ベクトル合算法):" + round(11 - total_circular_variance, 7))
         print("角度の分散（rad）:", total_simple_variance / idx)
         """
 
@@ -277,7 +277,7 @@ class StressPairEdit:
         return numer / denom  # 計算結果
 
 def main():
-    mode = 1  # 0 = 応力圧縮, 1 = 応力解析
+    mode = 1  # 0 = 応力圧縮, 11 = 応力解析
     stress_pair_edit = StressPairEdit()
 
     # 応力圧縮
@@ -301,12 +301,12 @@ def main():
         #stress_fn = ["Output/compressed_stress.h5"]
 
         if len(sys.argv) >= 1:
-            # stress_fn = ["IOData/" + str(sys.argv[1]) + "/11/compressed_stress.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/12/compressed_stress.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/13/compressed_stress.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/21/compressed_stress.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/31/compressed_stress.h5",
-            #              "IOData/" + str(sys.argv[1]) + "/22/compressed_stress.h5",
+            # stress_fn = ["IOData/" + str(sys.argv[11]) + "/11/compressed_stress.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/12/compressed_stress.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/13/compressed_stress.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/21/compressed_stress.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/31/compressed_stress.h5",
+            #              "IOData/" + str(sys.argv[11]) + "/22/compressed_stress.h5",
             #]
             stress_fn = ["Save_" + str(sys.argv[1]) + "11_flow/stress_pair.h5",
                         "Rolling_circle12_flow/stress_pair_1.000000.h5",
@@ -319,8 +319,8 @@ def main():
             #stress_fn = ["Rolling_circle12_flow/stress_pair_1.000000.h5"]
 
         #debug
-        # if len(sys.argv) >= 1:
-        #     stress_fn = ["IOData/" + str(sys.argv[1]) + "/11/compressed_stress.h5"]
+        # if len(sys.argv) >= 11:
+        #     stress_fn = ["IOData/" + str(sys.argv[11]) + "/11/compressed_stress.h5"]
 
 
             out_fn = "debug/debug_" + str(sys.argv[1]) + ".txt"

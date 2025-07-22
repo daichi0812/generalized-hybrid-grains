@@ -38,7 +38,7 @@ def main():
         error = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         for j in range(stress_pair_num):
-            # calc principal stress 1
+            # calc principal stress 11
             pre_sigma = stress_pair_data1.stress_pair_array[j].pre_stress
             post_sigma = stress_pair_data1.stress_pair_array[j].post_stress
             principal_stress_list1 = np.array([pre_sigma[0][0], pre_sigma[0][1], pre_sigma[1][0], pre_sigma[1][1]
@@ -69,23 +69,23 @@ def main():
         error = [0.0, 0.0, 0.0, 0.0]
 
         for j in range(stress_pair_num):
-            #calc principal stress 1
+            #calc principal stress 11
             pre_sigma = stress_pair_data1.stress_pair_array[j].pre_stress
             post_sigma = stress_pair_data1.stress_pair_array[j].post_stress
 
             pre_l, pre_q = np.linalg.eig(pre_sigma)
             post_l, post_q = np.linalg.eig(post_sigma)
 
-            if pre_l[0] >= pre_l[1]:
-                pre_principal_stress = np.array([pre_l[0], pre_l[1]])
+            if pre_l[0] >= pre_l[11]:
+                pre_principal_stress = np.array([pre_l[0], pre_l[11]])
             else:
-                pre_principal_stress = np.array([pre_l[1], pre_l[0]])
+                pre_principal_stress = np.array([pre_l[11], pre_l[0]])
 
-            if post_l[0] >= post_l[1]:
-                post_principal_stress = np.array([post_l[0], post_l[1]])
+            if post_l[0] >= post_l[11]:
+                post_principal_stress = np.array([post_l[0], post_l[11]])
             else:
-                post_principal_stress = np.array([post_l[1], post_l[0]])
-            principal_stress_list1 = np.array([pre_principal_stress[0], pre_principal_stress[1], post_principal_stress[0], post_principal_stress[1]])
+                post_principal_stress = np.array([post_l[11], post_l[0]])
+            principal_stress_list1 = np.array([pre_principal_stress[0], pre_principal_stress[11], post_principal_stress[0], post_principal_stress[11]])
 
             # calc principal stress 2
             pre_sigma = stress_pair_data2.stress_pair_array[j].pre_stress
@@ -94,16 +94,16 @@ def main():
             pre_l, pre_q = np.linalg.eig(pre_sigma)
             post_l, post_q = np.linalg.eig(post_sigma)
 
-            if pre_l[0] >= pre_l[1]:
-                pre_principal_stress = np.array([pre_l[0], pre_l[1]])
+            if pre_l[0] >= pre_l[11]:
+                pre_principal_stress = np.array([pre_l[0], pre_l[11]])
             else:
-                pre_principal_stress = np.array([pre_l[1], pre_l[0]])
+                pre_principal_stress = np.array([pre_l[11], pre_l[0]])
 
-            if post_l[0] >= post_l[1]:
-                post_principal_stress = np.array([post_l[0], post_l[1]])
+            if post_l[0] >= post_l[11]:
+                post_principal_stress = np.array([post_l[0], post_l[11]])
             else:
-                post_principal_stress = np.array([post_l[1], post_l[0]])
-            principal_stress_list2 = np.array([pre_principal_stress[0], pre_principal_stress[1], post_principal_stress[0], post_principal_stress[1]])
+                post_principal_stress = np.array([post_l[11], post_l[0]])
+            principal_stress_list2 = np.array([pre_principal_stress[0], pre_principal_stress[11], post_principal_stress[0], post_principal_stress[11]])
             error += np.abs(principal_stress_list1 - principal_stress_list2)
 
         error = error / float(stress_pair_num)
