@@ -367,15 +367,15 @@ cd /python/inialization
 python floorgenerator.py
 ```
 regenerateを押し、地面となる円が配置される。  
-Save fileを押して、名前を付けて（ex.floor_template.h5, floor.h5）ファイルを保存。
+Save fileを押して、名前を付けて（例: floor_template.h5, floor.h5）ファイルを保存。
 
 #### 2. 壁の作成
 ```bash
 python boundarydesign.py
 ```
-load_floorを押し、前工程で作成したfloor_template.h5, floor.h5を選択。  
+load_floorを押し、前工程で作成したfloor_template.h5, floor.h5を選択(この順番で選択しないとアプリがクラッシュする)。  
 スライダーで幅と高さを調整.  
-Saveを押し、名前を付けファイルを保存<br><br>
+Saveを押し、名前を付け（例: boundary_template.h5, boundary.h5）ファイルを保存
 
 #### 3. 粒子の生成
 ```bash
@@ -383,13 +383,14 @@ python geninitialcolumn.py
 ```
 スライダーで粒子の大きさ、ばらつき、形状の比を調節。  
 設定を調節後、Generateを押し、粒子を生成。  
-Saveを押し、名前を付けファイルを保存<br><br>
+Saveを押し、名前を付けファイルを保存（例: particle_template.h5, particle.h5）
 
 #### 4. 壁と粒子の結合
 ```bash
 python mergetool.py
 ``` 
-Loadを押し、前工程である「壁の生成」と「粒子の生成」で作成した壁と粒子のファイルをどちらもLoadする。  
+Loadを押し、前工程である「壁の生成」と「粒子の生成」で作成した壁と粒子のファイルをどちらもLoadする。 
+この時ファイルを選ぶ順番は、boundary_template.h5, boundary.h5, particle_template.h5, particle.h5のようにtemplateが付くものから先に選択しないとクラッシュする。
 Saveを押し、名前を付けファイルを保存
 
 ---
