@@ -448,12 +448,33 @@ cd Visualization/tameru
 "Simulator/tameru/IOData"フォルダを"Visualization/tameru/"にコピー
 
 #### 2. 連番画像の作成
-render_obj.batを実行
+- render_obj.batを実行(windowsの場合)
+- MacOSの場合は`render_obj.sh`(自作)を実行
+```bash
+./render_obj.sh
+```
 
-#### 3. 連番画像を動画化  
-    3.1 ffmpeg_pathにffmpeg.exeまでのpathに設定。  
-    3.2 tameru_pathに連番画像が入っているディレクトリまでのpathに設定。  
-    3.3 make_piled_video.batを実行
+#### 3. 連番画像を動画化 
+動画を保存するディレクトリを用意する。`python/Visualize/tameru`ディレクトリにて
+```bash
+mkdir movie
+```
+を行う。次の操作を行う。
+- Windowsの場合 
+  - 3.1 ffmpeg_pathにffmpeg.exeまでのpathに設定。  
+  - 3.2 tameru_pathに連番画像が入っているディレクトリまでのpathに設定。  
+  - 3.3 make_piled_video.batを実行
+- Mac(Apple Silicon)の場合
+  - ffmpegを用意する（まだ無い場合）`brew install ffmpeg`
+  - 以下のコマンドを実行して動画化する
+```bash
+ # 例：frame rate 30 fps、0.png-20.png を square11.mp4 にまとめる
+ffmpeg -framerate 30 \
+       -start_number 0 \
+       -i png/png_square11/%d.png \
+       -vcodec libx264 -pix_fmt yuv420p \
+       movie/square11.mp4
+```
 
 ファイル"Visualization/tameru/movie"に動画が出力される。
 
