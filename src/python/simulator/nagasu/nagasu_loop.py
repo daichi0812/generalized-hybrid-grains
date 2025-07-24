@@ -8,7 +8,8 @@ for i in range(RUN_NUM):
     OBJECT_FILE.append("")
 #OBJECT_FILE[0]="circle12.h5"
 #OBJECT_FILE[0]="circle11.h5"
-OBJECT_FILE[0]="circle22.h5"
+# OBJECT_FILE[0]="circle22.h5"
+OBJECT_FILE[0] = "square11.h5"
 
 
 # set template files
@@ -17,27 +18,31 @@ for i in range(RUN_NUM):
     TEMPLATE_FILE.append("")
 #TEMPLATE_FILE[0]="circle12_template.h5"
 #TEMPLATE_FILE[0]="circle11_template.h5"
-TEMPLATE_FILE[0]="circle22_template.h5"
-
+# TEMPLATE_FILE[0]="circle22_template.h5"
+TEMPLATE_FILE[0]="square11_template.h5"
 
 #you should change with depending on your own laptop
-#HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
-HomogenizeForceSleep_EXE = ["HomogenizeForceSleep.bat"]
+HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
+# HomogenizeForceSleep_EXE = ["HomogenizeForceSleep.bat"]
 # HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_ubuntu.sh"]
 
 ######################################################
 
 def RenameObjectFile(file_name):
-    "triangle31.h5"
-    "-> triangle31_flow.h5"
+    # "triangle31.h5"
+    # "-> triangle31_flow.h5"
+    "square11.h5"
+    "-> square11_flow.h5"
     tmp = file_name
     splited = tmp.split('.')
     tmp = f"{splited[0]}_flow.{splited[1]}"
     return tmp
 
 def RenameTemplateFile(file_name):
-    "triangle31_template.h5"
-    "-> triangle31_flow_template.h5"
+    # "triangle31_template.h5"
+    # "-> triangle31_flow_template.h5"
+    "square11_template.h5"
+    "-> square11_flow_template.h5"
     tmp = file_name
     splited = tmp.split('.')
     fileName = splited[0]
@@ -59,9 +64,9 @@ for i in range(RUN_NUM):
 
     obj_file = f"./InputData/{renamed_object_file_name}.h5"
     tmp_file = f"./InputData/{renamed_template_file_name}"
-    
+
     print(f"Object_File : {obj_file}, Template_File : {tmp_file}")
-    
+
     if os.path.exists(obj_file):
         print("Object File Found")
     else:
@@ -71,8 +76,8 @@ for i in range(RUN_NUM):
         print("Template File Found")
     else:
         print("<<<<<<<<<<<<<<<<<<<<<<<< Template File NOT FOUND >>>>>>>>>>>>>>>>>>>>>>>>>>")
-    
-    
+
+
 
 print("Hit Enter and RUN")
 input()
@@ -87,7 +92,7 @@ for i in range(RUN_NUM):
     renamed_object_file_name = RenameObjectFile(OBJECT_FILE[i]).split('.')[0]
     print(f"copy ./InputData/{renamed_object_file_name}.h5 to ./Save_{renamed_object_file_name}/{renamed_object_file_name}.h5")
     shutil.copy(f"./InputData/{renamed_object_file_name}.h5", f"./Save_{renamed_object_file_name}/{renamed_object_file_name}.h5")
-    
+
     renamed_template_file_name = RenameTemplateFile(TEMPLATE_FILE[i])
     print(f"copy ./InputData/{renamed_template_file_name} to ./Save_{renamed_object_file_name}/{renamed_template_file_name}")
     shutil.copy(f"./InputData/{renamed_template_file_name}", f"./Save_{renamed_object_file_name}/{renamed_template_file_name}")
