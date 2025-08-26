@@ -1,5 +1,5 @@
 <homogenize_stress>
-  <elements templates="Save_square11_flow/square11_flow_template.h5" forces="Save_square11_flow/serialized_forces.h5" MPMstress="Save_square11_flow/serialized_sigma.h5" />
+  <elements templates="Save_square11_flow/square11_flow_template.h5" forces="Save_square11_flow/serialized_forces.h5" MPMstress="MPMstress/MPM.h5" />
   <stress pre_stress="MPMstress/MPM.h5" post_stress="DEMstress/DEM.h5" stress_pair="Save_square11_flow/stress_pair.h5" strain="DEMstress/DEM2.h5" />
   <resume resume_fn="DEM_test_resume.xml" resume_MPM_fn="herschel_bulkley.xml" interval="0.001" />
   <outlier packing_fraction_threshold="1.0" distance_from_wall_threshold="0.03" />
