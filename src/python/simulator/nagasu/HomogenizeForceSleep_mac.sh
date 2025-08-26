@@ -3,7 +3,7 @@ cd "$(dirname "$0")" || exit
 tmp=/tmp/$$exec_taichi
 
 # Prefix="/Volumes/ExtremeSSD/python/analysis/python/analysis"
-Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/analysis"
+Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu"
 
 DEM="./DEMstress/DEM.h5"
 PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
