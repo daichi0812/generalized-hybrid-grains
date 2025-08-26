@@ -110,18 +110,20 @@ do
   done
   echo "[INFO] Detected $FORCES"
 
-# --- ★ 追加：DEM のプレースホルダを用意（初回でも H5Fopen できるように） ---
-  $PYTHON_PATH - <<'PY'
-import os, h5py
-os.makedirs('DEMstress', exist_ok=True)
-fn = 'DEMstress/DEM.h5'
-with h5py.File(fn, 'a') as f:
-    if 'homogenization' not in f:
-        f.create_group('homogenization')
-print('[INFO] ensured placeholder', fn)
+  # 先に DEM を用意（全ステップの homogenization を生成）
+  $PYTHON_PATH $Prefix/allstepMPMBeforeflow.py homogenize_stress.xml
+  # 生成確認（最低限 0/homogenization があること）
+  $PYTHON_PATH - << 'PY'
+import h5py, sys
+fn = "DEMstress/DEM.h5"
+with h5py.File(fn, "r") as f:
+  ok = False
+  for k in f.keys():
+    if f"{k}/homogenization" in f:
+      ok = True; break
+  print("[CHECK]", fn, "has homogenization groups?", ok)
+  sys.exit(0 if ok else 1)
 PY
-  # ---------------------------------------------------------------------------
-
 
   ./MPM2D herschel_bulkley.xml
 
