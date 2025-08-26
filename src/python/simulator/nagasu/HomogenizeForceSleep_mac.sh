@@ -1,9 +1,13 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit
 tmp=/tmp/$$exec_taichi
-Prefix="/Volumes/ExtremeSSD/python/analysis/python/analysis"
+
+# Prefix="/Volumes/ExtremeSSD/python/analysis/python/analysis"
+Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/analysis"
+
 DEM="./DEMstress/DEM.h5"
 PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
+
 MaxLoop=1000
 ${PYTHON_PATH} ${Prefix}/initResumefn.py homogenize_stress.xml
 {
