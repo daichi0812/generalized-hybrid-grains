@@ -3,3 +3,7 @@ __pycache__/
 .vscode/
 .idea/
 build/
+
+# large artifacts
+*.h5
+*.log
