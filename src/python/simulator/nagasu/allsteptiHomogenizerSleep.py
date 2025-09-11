@@ -148,6 +148,8 @@ from allgrainh5 import *
 from allhomogenizationh5 import *
 from removeoutlier import *
 
+def resolve(base: Path, p: str) -> str:
+    return os.path.normpath(p if os.path.isabs(p) else str(base / p))
 
 def dem_has_sigma_any(fn: str) -> bool:
     """DEM.h5 に少なくとも /0/homogenization/sigma があるか"""
