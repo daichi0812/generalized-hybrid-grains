@@ -1,4 +1,5 @@
 #!/bin/bash
+set -Eeuo pipefail
 cd "$(dirname "$0")" || exit
 tmp=/tmp/$$exec_taichi
 
@@ -13,12 +14,20 @@ PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
 MaxLoop=1000
 ${PYTHON_PATH} ${Prefix}/initResumefn.py homogenize_stress.xml
 {
-cat << EOF > ${tmp}
+# cat << EOF > ${tmp}
+# #!/bin/bash
+# cd "${Prefix}" || exit 1
+# ${PYTHON_PATH} ${Prefix}/allsteptiHomogenizerSleep.py ${Prefix}/homogenize_stress.xml
+# EOF
+# chmod 777 ${tmp}
+
+# 2025-09-09 追加
+cat << 'LAUNCH' > "$tmp"
 #!/bin/bash
-cd "${Prefix}" || exit 1
-${PYTHON_PATH} ${Prefix}/allsteptiHomogenizerSleep.py ${Prefix}/homogenize_stress.xml
-EOF
-chmod 777 ${tmp}
+cd "/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu" || exit 1
+/opt/homebrew/Caskroom/miniforge/base/bin/python /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/allsteptiHomogenizerSleep.py /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/homogenize_stress.xml
+LAUNCH
+chmod 777 "$tmp"
 
 } &&{
 open ${tmp}
@@ -56,42 +65,32 @@ do
     sleep 0.1
   done
 
-  # --- DEM.h5 の存在だけ先に担保(allstepti が作ることもあるが、なければ空を作る)
-  if [ ! -e "$DEM" ]; then
-    "$PYTHON_PATH" - << 'PY'
-import h5py
-os.makedirs("DEMstress", exit_ok=True)
-fn = "DEMstress/DEM.h5"
-with h5py.File(fn, "w") as f:
-    g0 = f.create_group("0")
-    g0.create_group("homogenization")
-print("[INFO] primed:", fn)
-PY
-  fi
-
-  # === ここが肝: MPM2D より先に　DEM の均質化を作成 ===
-  echo "[RUN] allstepMPMBeforeflow.py (build DEM homogenization)"
-  ${PYTHON_PATH} ${Prefix}/allstepMPMBeforeflow.py homogenize_stress.xml
-
-  # --- 生成検査: 最低限 0/homogenizatioin があるか（必要なら 'sigma' も確認)
-  echo "[CHECK] DEMstress/DEM.h5 -> /0/homogenization"
+  # --- DEM.h5 に /0/homogenization が出るまで待つ（ <- allstepti が作る)
+  echo "[WAIT] DEMstress/DEM.h5 -> /0/homogenization/sigma"
   "$PYTHON_PATH" - << 'PY'
-import h5py, time, sys
-with h5py.File("DEMstress/DEM.h5", 'r') as f:
-    ok = "0" in f and "homogenization" in f["0"]
-    # 'sigma' を中に作る実装なら、以下も true になるはず
-    # ok = ok and "sigma" in f["0/homogenization"]
-    print("[OK] if ok else "[NG], list(f.keys()))
-    sys.exit(0 if else 1)
+import sys, time, os, h5py
+fn = "DEMstress/DEM.h5"
+def ready():
+    if not os.path.exists(fn): return False
+    try:
+        with h5py.File(fn, "r") as f:
+            return "0" in f and "homogenization" in f["0"] and "sigma" in f["0/homogenization"]
+    except Exception:
+        return False
+for _ in range(600):
+    if ready():
+        print("[OK] DEM.h5 has /0/homogenization/sigma"); sys.exit(0)
+    time.sleep(0.1)
+print("[ERR] DEM.h5 not ready"); sys.exit(1)
 PY
 
   echo "[RUN] MPM2D"
   ./MPM2D herschel_bulkley.xml
 
-  # --- MPM 出力が整うのを待つ(/0/sigma が読めるまで）
-  echo "[WAIT] MPMstress/MPM.h5 -> /0/sigma"
+  # MPM 出力（/0/sigma）を待つ
+  echo "[WAIT] $MPM_H5 -> /0/sigma"
   "$PYTHON_PATH" - << 'PY'
-import h5py, time, os, sys
+import sys, time, os, h5py
 fn = "MPMstress/MPM.h5"
 def ready():
     if not os.path.exists(fn): return False
@@ -102,13 +101,15 @@ def ready():
         return False
 for _ in range(600):
     if ready():
-        print("[OK] MPM.h5 has /0/sigma")
-        sys.exit(0)
+        print("[OK] MPM.h5 has /0/sigma"); sys.exit(0)
     time.sleep(0.1)
-sys.exit("[ERR] MPM.h5 not ready: missing /0/sigma")
+print("[ERR] MPM.h5 not ready: missing /0/sigma"); sys.exit(1)
 PY
-  ${PYTHON_PATH} ${Prefix}/storeStressPair.py homogenize_stress.xml
-  ${PYTHON_PATH} ${Prefix}/rewriteResumefn.py homogenize_stress.xml
+
+  "$PYTHON_PATH" "$Prefix/allstepMPMBeforeflow.py" homogenize_stress.xml
+  "$PYTHON_PATH" "$Prefix/storeStressPair.py" homogenize_stress.xml
+  "$PYTHON_PATH" "$Prefix/rewriteResumefn.py" homogenize_stress.xml
 done
+
 touch exit_flag.txt
 exit

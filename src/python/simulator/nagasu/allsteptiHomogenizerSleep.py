@@ -170,7 +170,7 @@ def allstep_homogenize(root, out_dem_h5: str, forces_h5: str, template_h5: str):
     # 出力(歪み)ファイル
     strain_fn = root.find("stress").attrib["strain"]
 
-    # outlier 閾値
+    # outlier 閾値あ
     outlier = root.find("outlier")
     packing_fraction_threshold = float(outlier.attrib["packing_fraction_threshold"])
     distance_from_wall_threshold = float(outlier.attrib["distance_from_wall_threshold"])
