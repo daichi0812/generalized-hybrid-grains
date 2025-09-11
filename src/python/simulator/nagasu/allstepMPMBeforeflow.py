@@ -107,18 +107,57 @@ try:
 except FileNotFoundError:
     pass
 
+# --- forces の場所を自動で見つける ---
+import os, glob
+
 print(f"[INFO] XML MPMstress = {element_fn}")
 if not os.path.isabs(element_fn):
     element_fn = os.path.abspath(element_fn)
-save_dir = os.path.dirname(pre_fn)
-forces_candidate = os.path.join(save_dir, "serialized_forces.h5")
 
-# XML が serialized_forces.h5 を指していなければ上書き
-if os.path.basename(element_fn) != "serialized_forces.h5":
-    print(f"[WARN] MPM_data_num は serialized_forces.h5 を想定。override -> {forces_candidate}")
-    element_fn = forces_candidate
+candidates = []
 
-print(f"[INFO] forces H5 = {element_fn}")
+# 1) XML が既に serialized_forces.h5 を指しているなら最優先候補
+if os.path.basename(element_fn) == "serialized_forces.h5":
+    candidates.append(element_fn)
+
+# 2) pre_fn (= pre_stress) の親のさらに一つ上で Save_* を探す（例: Save_square11_flow/serialized_forces.h5）
+pre_dir   = os.path.dirname(pre_fn)
+root_dir  = os.path.abspath(os.path.join(pre_dir, ".."))
+candidates += sorted(glob.glob(os.path.join(root_dir, "Save_*", "serialized_forces.h5")))
+
+# 3) 旧ロジック（MPMstress 配下）も候補に入れておく
+candidates.append(os.path.join(pre_dir, "serialized_forces.h5"))
+
+# 重複除去
+seen = set()
+candidates = [p for p in candidates if not (p in seen or seen.add(p))]
+
+def probe_frames(p):
+    try:
+        return os.path.exists(p) and os.path.getsize(p) > 0 and MPM_data_num(p) > 0
+    except Exception:
+        return False
+
+picked = None
+for p in candidates:
+    if probe_frames(p):
+        picked = p
+        break
+
+# まだ1フレームも入ってない場合は、とりあえず一番有力そうな候補で待つ
+if picked is None:
+    # Save_* が見つかっていればそれ、なければ先頭
+    picked = candidates[1] if len(candidates) >= 2 else candidates[0]
+
+element_fn = picked
+print("[INFO] forces candidates:")
+for p in candidates:
+    try:
+        sz = os.path.getsize(p) if os.path.exists(p) else 0
+        print(f"  - {p} (exists={os.path.exists(p)}, size={sz})")
+    except Exception:
+        print(f"  - {p} (stat failed)")
+print(f"[INFO] forces H5 (watch) = {element_fn}")
 
 #grid_startを取ってくる
 post_fn = root[1].attrib["post_stress"]
