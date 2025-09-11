@@ -137,15 +137,16 @@ import xml.etree.ElementTree as ET
 import h5py
 import numpy as np
 
+# ★ CPUで初期化（f64対応）。Metal/Vulkanだとf64未対応で落ちる。
+import taichi as ti
+
+ti.init(arch=ti.cpu, default_fp=ti.f64)
+
 from homogenizerti import TiHomogenizationGrid
 from allforceh5 import *
 from allgrainh5 import *
 from allhomogenizationh5 import *
 from removeoutlier import *
-
-
-def resolve(base: Path, p: str) -> str:
-    return os.path.normpath(p if os.path.isabs(p) else str(base / p))
 
 
 def dem_has_sigma_any(fn: str) -> bool:
@@ -160,6 +161,7 @@ def dem_has_sigma_any(fn: str) -> bool:
             if "homogenization" not in g:
                 return False
             hg = g["homogenization"]
+            return "sigma" in hg
     except Exception:
         return False
 
@@ -222,6 +224,7 @@ def allstep_homogenize(root, out_dem_h5: str, forces_h5: str, template_h5: str):
         allhomogenization_data.all_step_homogenization.append(homogenization_data)
 
     # 書き出し
+    os.makedirs(os.path.dirname(out_dem_h5), exist_ok=True)
     strain_data.save(strain_fn)
     allhomogenization_data.save(out_dem_h5)
     print(f"[OK] wrote homogenization: {out_dem_h5}")
@@ -263,7 +266,6 @@ def main(argv):
                     allstep_homogenize(root, dem_h5, forces_h5, template_h5)
                 except Exception as e:
                     print("[ERR] homogenize failed:", e)
-            # 次の周期へ
         time.sleep(1.0)
 
 
