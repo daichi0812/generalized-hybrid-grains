@@ -19,8 +19,6 @@ element_fn = root[0].attrib["MPMstress"]
 allelements = AllParticleHomogenizeData()
 #全ステップ粒子ロードする
 #allelements.load(element_fn)
-
-
 allhomogenization_data = AllHomogenizeData()
 
 pre_fn = root[1].attrib["pre_stress"]
@@ -33,7 +31,7 @@ if is_file:
 
 # --- 2025-09-11 追加 ---
 # ... pre_fn を決めた直後あたりに追加 ...
-import os
+import os, h5py
 
 os.makedirs(os.path.dirname(pre_fn), exist_ok=True)
 try:
@@ -63,28 +61,59 @@ density = float(resume_root[2].attrib["density"])
 #print(os.path.getsize(element_fn))
 #print(os.path.exists(element_fn))
 
-with h5py.File(element_fn, "r") as h5:
-    keys = list(map(int, h5.keys()))
-    sorted_keys = sorted(keys)
-    start_timestep = sorted_keys[0]
-    end_timestep = sorted_keys[-1] + 1
-    for i in range(start_timestep, end_timestep):
-        allhomogenization_data.all_timestep.append(i)
+# --- 2025-09-11 コメントアウト ---
+# with h5py.File(element_fn, "r") as h5:
+#     keys = list(map(int, h5.keys()))
+#     sorted_keys = sorted(keys)
+#     start_timestep = sorted_keys[0]
+#     end_timestep = sorted_keys[-1] + 1
+#     for i in range(start_timestep, end_timestep):
+#         allhomogenization_data.all_timestep.append(i)
 
-max_loop = MPM_data_num(element_fn)
+# max_loop = MPM_data_num(element_fn)
+# for i in range(max_loop):
+#     allelements.load_from_idx(element_fn, i)
+#     particle_force = allelements.all_step_particle_homogenization[0]
+#     homogenization_data = HomogenizeData()
+#     #粒子の応力を格子の中心に補完する
+#     #比較対象となるDEM格子のgrid_startを取り出す。
+#     grid_start = allpost_homogenization_data.all_step_homogenization[i].homogenization[0].grid_p
+
+#     interpolate_stress = interpolateMPMStress(h, particle_force, grid_start)
+#     interpolate_stress.interpolateStress()
+#     interpolate_stress.saveStress(homogenization_data)
+#     allhomogenization_data.all_step_homogenization.append(homogenization_data)
+
+# allhomogenization_data.save(pre_fn)
+# --- 2025-09-11 コメントアウト ここまで ---
+
+# --- 2025-09-11 追加 ---
+# === タイムステップ決定を安全化 ===
+n_forces = MPM_data_num(element_fn)  # forces 側のフレーム数
+n_post   = len(allpost_homogenization_data.all_step_homogenization)  # post 側のフレーム数
+max_loop = min(n_forces, n_post)
+
+if max_loop <= 0:
+    raise RuntimeError(f"No frames to process: forces={n_forces}, post={n_post}")
+
+# /homogenization/<timestep> の作成順を定義
+allhomogenization_data.all_timestep = list(range(max_loop))
+
+# === メインループ ===
 for i in range(max_loop):
     allelements.load_from_idx(element_fn, i)
     particle_force = allelements.all_step_particle_homogenization[0]
-    homogenization_data = HomogenizeData()
-    #粒子の応力を格子の中心に補完する
-    #比較対象となるDEM格子のgrid_startを取り出す。
+
+    # post 側の grid_start（比較対象）を使用
     grid_start = allpost_homogenization_data.all_step_homogenization[i].homogenization[0].grid_p
 
     interpolate_stress = interpolateMPMStress(h, particle_force, grid_start)
     interpolate_stress.interpolateStress()
+
+    homogenization_data = HomogenizeData()
     interpolate_stress.saveStress(homogenization_data)
     allhomogenization_data.all_step_homogenization.append(homogenization_data)
 
+# 最後に一度だけ保存（新規ファイルに書く想定）
 allhomogenization_data.save(pre_fn)
-
-    
+# --- 2025-09-11 追加 ここまで ---
