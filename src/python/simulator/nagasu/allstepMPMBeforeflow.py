@@ -107,51 +107,36 @@ try:
 except FileNotFoundError:
     pass
 
-# --- forces の場所を自動で見つける ---
-import os, glob
+# --- forces の場所を自動で見つける（Save_* を最優先） ---
+import os, glob, h5py
 
 print(f"[INFO] XML MPMstress = {element_fn}")
 if not os.path.isabs(element_fn):
     element_fn = os.path.abspath(element_fn)
 
-candidates = []
-
-# 1) XML が既に serialized_forces.h5 を指しているなら最優先候補
-if os.path.basename(element_fn) == "serialized_forces.h5":
-    candidates.append(element_fn)
-
-# 2) pre_fn (= pre_stress) の親のさらに一つ上で Save_* を探す（例: Save_square11_flow/serialized_forces.h5）
+# pre_stress の親のさらに一つ上（= Save_* の親）を基準に探す
 pre_dir   = os.path.dirname(pre_fn)
 root_dir  = os.path.abspath(os.path.join(pre_dir, ".."))
-candidates += sorted(glob.glob(os.path.join(root_dir, "Save_*", "serialized_forces.h5")))
 
-# 3) 旧ロジック（MPMstress 配下）も候補に入れておく
-candidates.append(os.path.join(pre_dir, "serialized_forces.h5"))
+# 候補：Save_*/serialized_forces.h5（複数あっても今回の Save_* を拾えるはず）
+save_candidates = sorted(glob.glob(os.path.join(root_dir, "Save_*", "serialized_forces.h5")))
+mpm_forces = os.path.join(pre_dir, "serialized_forces.h5")  # 互換の退避パス
 
-# 重複除去
-seen = set()
-candidates = [p for p in candidates if not (p in seen or seen.add(p))]
-
-def probe_frames(p):
-    try:
-        return os.path.exists(p) and os.path.getsize(p) > 0 and MPM_data_num(p) > 0
-    except Exception:
-        return False
-
+# Save_* を最優先で選ぶ（存在 & サイズ>0 だけで十分）
 picked = None
-for p in candidates:
-    if probe_frames(p):
+for p in save_candidates:
+    if os.path.exists(p) and os.path.getsize(p) > 0:
         picked = p
         break
 
-# まだ1フレームも入ってない場合は、とりあえず一番有力そうな候補で待つ
+# Save_* が見つからなければ MPMstress/serialized_forces.h5 にフォールバック
 if picked is None:
-    # Save_* が見つかっていればそれ、なければ先頭
-    picked = candidates[1] if len(candidates) >= 2 else candidates[0]
+    picked = mpm_forces
 
 element_fn = picked
+
 print("[INFO] forces candidates:")
-for p in candidates:
+for p in (save_candidates + [mpm_forces]):
     try:
         sz = os.path.getsize(p) if os.path.exists(p) else 0
         print(f"  - {p} (exists={os.path.exists(p)}, size={sz})")
@@ -159,19 +144,17 @@ for p in candidates:
         print(f"  - {p} (stat failed)")
 print(f"[INFO] forces H5 (watch) = {element_fn}")
 
-#grid_startを取ってくる
-post_fn = root[1].attrib["post_stress"]
-allpost_homogenization_data = AllHomogenizeData()
-allpost_homogenization_data.load(post_fn)
-
-#gridのパラメータ
-h = float(root[4].attrib["h"])
-
-#density
-resume_fn = root[2].attrib["resume_MPM_fn"]
-resume_tree = ET.parse(resume_fn)
-resume_root = resume_tree.getroot()
-density = float(resume_root[2].attrib["density"])
+# ---- 安全なフレーム数カウンタ（MPM_data_num のフォールバック） ----
+def safe_count_frames(h5_fn):
+    try:
+        return MPM_data_num(h5_fn)
+    except Exception:
+        # top レベルのキーが数値名ならカウントしてみる（失敗時は 0）
+        try:
+            with h5py.File(h5_fn, "r") as h5:
+                return sum(k.isdigit() for k in h5.keys())
+        except Exception:
+            return 0
 
 # --- forces が書かれるまで待つ ---
 def wait_for_forces(h5_fn, min_frames=1, timeout_sec=120, poll_sec=0.5):
@@ -180,10 +163,7 @@ def wait_for_forces(h5_fn, min_frames=1, timeout_sec=120, poll_sec=0.5):
     while True:
         exists = os.path.exists(h5_fn)
         size   = os.path.getsize(h5_fn) if exists else 0
-        try:
-            n = MPM_data_num(h5_fn) if exists and size > 0 else 0
-        except Exception:
-            n = 0
+        n = safe_count_frames(h5_fn) if exists and size > 0 else 0
 
         if n >= min_frames:
             print(f"[INFO] serialized_forces detected: frames={n}, size={size}B, file={h5_fn}")
@@ -201,7 +181,7 @@ def wait_for_forces(h5_fn, min_frames=1, timeout_sec=120, poll_sec=0.5):
         time.sleep(poll_sec)
 
 # === タイムステップ決定（post 側は既に 1000 ある想定） ===
-n_forces = wait_for_forces(element_fn, min_frames=1)  # まず1フレーム来るまでブロック
+n_forces = wait_for_forces(element_fn, min_frames=1)
 n_post   = len(allpost_homogenization_data.all_step_homogenization)
 
 max_loop = min(n_forces, n_post)
