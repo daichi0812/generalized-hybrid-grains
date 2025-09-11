@@ -131,32 +131,57 @@ else
   echo "[ERR] detector did not set MPM_FILE/SIGMA_PATH"; exit 1
 fi
 
-# --- 期待の場所にブリッジ（MPMstress/MPM.h5:/0/sigma を再構成）
+# --- 期待の場所にブリッジ（/0/homogenization を“まるごと”コピーして /0/sigma も作る）
 if [ "$MPM_FILE" != "MPMstress/MPM.h5" ] || { [ "$SIGMA_PATH" != "/0/sigma" ] && [ "$SIGMA_PATH" != "/0/homogenization/sigma" ]; }; then
-  echo "[FIX] create MPMstress/MPM.h5:/0/(homogenization/)?sigma from $MPM_FILE:$SIGMA_PATH"
+  echo "[FIX] create full /0/homogenization from $MPM_FILE:$SIGMA_PATH"
   "$PYTHON_PATH" - << 'PY'
-import os, h5py
+import os, posixpath, h5py
+
 src_file = os.environ["MPM_FILE"]
-src_path = os.environ["SIGMA_PATH"]
+src_path = os.environ["SIGMA_PATH"]        # 例) /1/homogenization/sigma または /1/sigma
 dst_file = "MPMstress/MPM.h5"
 
-# 読み出し
-with h5py.File(src_file, "r") as s:
-    data = s[src_path][()]
+def step_group_of(path):                   # "/1/..." -> "1"
+    return path.strip("/").split("/")[0]
 
-# 上書き作成
-if os.path.exists(dst_file):
-    os.remove(dst_file)
-with h5py.File(dst_file, "w") as t:
-    g0 = t.create_group("0")
-    # 期待構造その1: /0/homogenization/sigma
-    hg = g0.create_group("homogenization")
-    hg.create_dataset("sigma", data=data)
-    # 互換: /0/sigma も作っておく（読む側がどちらでもOKに）
-    g0.create_dataset("sigma", data=data)
-print("[OK] wrote", dst_file, "(/0/homogenization/sigma and /0/sigma)")
+with h5py.File(src_file, "r") as s:
+    step = step_group_of(src_path)
+    # 元のファイルで /<step>/homogenization があればそこを基底に、無ければ /<step> を基底にする
+    base_src = f"/{step}/homogenization" if "homogenization" in s[step] else f"/{step}"
+    src_grp = s[base_src]
+
+    # 既存の出力を作り直し
+    if os.path.exists(dst_file):
+        os.remove(dst_file)
+
+    with h5py.File(dst_file, "w") as t:
+        g0 = t.create_group("0")
+        hg = g0.create_group("homogenization")
+
+        def copy_items(g_src, g_dst):
+            for k, v in g_src.items():
+                if isinstance(v, h5py.Dataset):
+                    g_dst.create_dataset(k, data=v[()])
+                elif isinstance(v, h5py.Group):
+                    copy_items(v, g_dst.create_group(k))
+        copy_items(src_grp, hg)
+
+        # 互換のため /0/sigma も用意（存在すれば中身を複製）
+        if "sigma" in hg:
+            g0.create_dataset("sigma", data=hg["sigma"][()])
+
+print("[OK] wrote", dst_file, "with full /0/homogenization (incl. center_of_mass)")
 PY
 fi
+
+# 検証（center_of_mass があることを確認）
+"$PYTHON_PATH" - << 'PY'
+import h5py, sys
+with h5py.File("MPMstress/MPM.h5","r") as f:
+    ok = "center_of_mass" in f["0/homogenization"]
+print("[CHK] /0/homogenization/center_of_mass:", "OK" if ok else "MISSING")
+sys.exit(0 if ok else 1)
+PY
 
   "$PYTHON_PATH" "$Prefix/allstepMPMBeforeflow.py" homogenize_stress.xml
   "$PYTHON_PATH" "$Prefix/storeStressPair.py" homogenize_stress.xml

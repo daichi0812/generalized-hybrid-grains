@@ -189,16 +189,31 @@ def allstep_homogenize(root, out_dem_h5: str, forces_h5: str, template_h5: str):
     strain_data = AllHomogenizeData()
 
     # タイムステップ列（forces のキーから組む）
+    # with h5py.File(forces_h5, "r") as h5:
+    #     keys = [k for k in h5.keys() if k != "force_num"]
+    #     if not keys:
+    #         raise RuntimeError(f"No force steps in {forces_h5}")
+    #     steps = sorted(map(int, keys))
+    #     for i in steps:
+    #         allhomogenization_data.all_timestep.append(i)
+    #         strain_data.all_timestep.append(i)
+
+    # max_loop = force_data_num(forces_h5)
+
+    # --- 2025-09-11 修正 ---
+    # タイムステップ列（forces のキーから組む）
     with h5py.File(forces_h5, "r") as h5:
         keys = [k for k in h5.keys() if k != "force_num"]
         if not keys:
             raise RuntimeError(f"No force steps in {forces_h5}")
-        steps = sorted(map(int, keys))
+        steps = sorted(set(map(int, keys)))   # ★ set() で重複排除
         for i in steps:
             allhomogenization_data.all_timestep.append(i)
             strain_data.all_timestep.append(i)
-
-    max_loop = force_data_num(forces_h5)
+    # ループ回数も steps に合わせる
+    max_loop = len(steps)   
+    # --- 2025-09-11 ここまで ---
+    
     homogenization_grid = TiHomogenizationGrid()
 
     for i in range(max_loop):
