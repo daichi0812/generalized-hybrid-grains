@@ -31,6 +31,19 @@ if is_file:
     allhomogenization_data.load(pre_fn)
 """
 
+# --- 2025-09-11 追加 ---
+# ... pre_fn を決めた直後あたりに追加 ...
+import os
+
+os.makedirs(os.path.dirname(pre_fn), exist_ok=True)
+try:
+    os.remove(pre_fn)  # 既存なら消す＝まっさらで保存
+except FileNotFoundError:
+    pass
+
+allhomogenization_data.save(pre_fn)
+# --- 2025-09-11 追加 ここまで ---
+
 #grid_startを取ってくる
 post_fn = root[1].attrib["post_stress"]
 allpost_homogenization_data = AllHomogenizeData()
