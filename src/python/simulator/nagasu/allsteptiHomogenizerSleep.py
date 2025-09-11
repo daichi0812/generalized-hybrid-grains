@@ -1,3 +1,5 @@
+# 純正コード
+
 # from struct import pack
 # from homogenizerti import TiHomogenizationGrid
 # from allforceh5 import *
@@ -123,124 +125,146 @@ allsteptiHomogenizerSleep.py  (minimal patch)
 目的:
 - XML 内の相対パスを XML の所在ディレクトリ基準で絶対パス化する
 - ファイル存在チェックの誤りを修正（not(path) → not os.path.exists(path)）
-- DEM.h5 が未作成なら最低限の空ファイルを作って後工程に渡す（必要最小限）
+- DEM.h5 を全て計算された状態で出力する
 
 既存の計算ロジックは変更しません。ログはデバッグ用にそのまま出します。
 """
+# 2025-09-11 追加
 
-import os
-import sys
-import time
+import os, sys, time, copy
 from pathlib import Path
+import xml.etree.ElementTree as ET
+import h5py
+import numpy as np
 
-try:
-    import h5py
-except Exception as e:
-    print("[ERROR] h5py import failed:", e)
-    sys.exit(1)
+from homogenizerti import TiHomogenizationGrid
+from allforceh5 import *
+from allgrainh5 import *
+from allhomogenizationh5 import *
+from removeoutlier import *
 
-# Taichi のバージョンログが欲しい場合のみ（従来ログと整合）
-try:
-    import taichi as ti
-    # macOS Metal を優先（失敗時はデフォルト）
+
+def resolve(base: Path, p: str) -> str:
+    return os.path.normpath(p if os.path.isabs(p) else str(base / p))
+
+
+def dem_has_sigma_any(fn: str) -> bool:
+    """DEM.h5 に少なくとも /0/homogenization/sigma があるか"""
+    if not os.path.exists(fn):
+        return False
     try:
-        ti.init(arch=ti.metal)  # type: ignore
+        with h5py.File(fn, "r") as f:
+            if "0" not in f:
+                return False
+            g = f["0"]
+            if "homogenization" not in g:
+                return False
+            hg = g["homogenization"]
     except Exception:
-        ti.init()
-except Exception:
-    pass
+        return False
 
 
-def resolve_path(base_dir: Path, p: str) -> str:
-    """XML から来たパス p を base_dir 起点で正規化する（絶対ならそのまま）"""
-    if os.path.isabs(p):
-        return os.path.normpath(p)
-    return os.path.normpath(str(base_dir / p))
+def allstep_homogenize(root, out_dem_h5: str, forces_h5: str, template_h5: str):
+    # 出力(歪み)ファイル
+    strain_fn = root.find("stress").attrib["strain"]
 
+    # outlier 閾値
+    outlier = root.find("outlier")
+    packing_fraction_threshold = float(outlier.attrib["packing_fraction_threshold"])
+    distance_from_wall_threshold = float(outlier.attrib["distance_from_wall_threshold"])
 
-def parse_xml_and_pick_paths(xml_path: Path):
-    """homogenize_stress.xml を読み、必要なパス（forces, DEM h5）を取り出す"""
-    import xml.etree.ElementTree as ET
+    # グリッド設定
+    grid = root.find("grid")
+    h = float(grid.attrib["h"])
+    grid_start_offset_ratio = np.array([0.0, 0.0])
 
-    tree = ET.parse(str(xml_path))
-    root = tree.getroot()
+    # データ入れ物
+    allforce_data = AllForceData()
+    allscene_data = AllSceneData()
+    allhomogenization_data = AllHomogenizeData()
+    strain_data = AllHomogenizeData()
 
-    elements = root.find("elements")
-    stress = root.find("stress")
-    if elements is None:
-        raise RuntimeError("<elements> node not found in XML")
-    if stress is None:
-        raise RuntimeError("<stress> node not found in XML")
+    # タイムステップ列（forces のキーから組む）
+    with h5py.File(forces_h5, "r") as h5:
+        keys = [k for k in h5.keys() if k != "force_num"]
+        if not keys:
+            raise RuntimeError(f"No force steps in {forces_h5}")
+        steps = sorted(map(int, keys))
+        for i in steps:
+            allhomogenization_data.all_timestep.append(i)
+            strain_data.all_timestep.append(i)
 
-    forces_rel = elements.attrib.get("forces")
-    dem_rel = stress.attrib.get("post_stress") or stress.attrib.get("strain")
+    max_loop = force_data_num(forces_h5)
+    homogenization_grid = TiHomogenizationGrid()
 
-    if not forces_rel:
-        raise RuntimeError('elements[@forces] not found')
-    if not dem_rel:
-        raise RuntimeError('stress[@post_stress] (or @strain) not found')
+    for i in range(max_loop):
+        # 力を1ステップロード
+        allforce_data.load_from_idx_for_simulation(forces_h5, i)
 
-    return forces_rel, dem_rel
+        # 均質化
+        homogenization_data = HomogenizeData()
+        homogenization_grid.setData(grid_start_offset_ratio, h, allforce_data)
+        homogenization_grid.calcHomogenizeStress()
+        homogenization_grid.saveStress(homogenization_data)
 
+        # 歪み側は outlier 前の生データを保存
+        strain_data.all_step_homogenization.append(copy.deepcopy(homogenization_data))
 
-def ensure_minimal_dem_file(path_to_filename: str):
-    """DEM.h5 が無ければ空で作成（最低限の雛形: /0/homogenization）"""
-    os.makedirs(os.path.dirname(path_to_filename), exist_ok=True)
-    if not os.path.exists(path_to_filename):
-        with h5py.File(path_to_filename, "w") as f:
-            # 最低限のグループを用意（後工程が存在チェックだけするケースに対応）
-            g0 = f.create_group("0")
-            g0.create_group("homogenization")
-        print("[INFO] created minimal DEM h5:", path_to_filename)
+        # 要素配置をロードして outlier 除去 → 応力側
+        allscene_data.load_from_idx_for_simulation(template_h5, forces_h5, i)
+        remove_outlier = RemoveOutlier()
+        remove_outlier.setData(allscene_data, homogenization_data)
+        remove_outlier.removeGrid(
+            homogenization_data,
+            packing_fraction_threshold,
+            distance_from_wall_threshold,
+        )
+        allhomogenization_data.all_step_homogenization.append(homogenization_data)
+
+    # 書き出し
+    strain_data.save(strain_fn)
+    allhomogenization_data.save(out_dem_h5)
+    print(f"[OK] wrote homogenization: {out_dem_h5}")
 
 
 def main(argv):
-    print("called main.")
-
     if len(argv) < 2:
         print("Usage: allsteptiHomogenizerSleep.py path/to/homogenize_stress.xml")
         sys.exit(1)
 
-    xml_fn = Path(argv[1]).resolve()
-    if not xml_fn.exists():
-        print("[ERROR] XML not found:", xml_fn)
-        sys.exit(1)
+    xml_path = Path(argv[1]).resolve()
+    base = xml_path.parent
 
-    base_dir = xml_fn.parent
-    # XML から相対パスを取得
-    forces_rel, dem_rel = parse_xml_and_pick_paths(xml_fn)
+    tree = ET.parse(str(xml_path))
+    root = tree.getroot()
+    elements = root.find("elements")
+    stress = root.find("stress")
 
-    # === ここが最小パッチの核心: パス正規化 ===
-    path_to_element_fn = resolve_path(base_dir, forces_rel)   # serialized_forces.h5
-    path_to_filename   = resolve_path(base_dir, dem_rel)      # DEMstress/DEM.h5
+    forces_rel = elements.attrib["forces"]
+    template_rel = elements.attrib["templates"]
+    dem_rel = stress.attrib.get("post_stress") or stress.attrib["strain"]
 
-    # 見やすいデバッグ表示
-    print("element_fn: ", path_to_element_fn)
-    print("filename:  ", path_to_filename)
+    forces_h5 = resolve(base, forces_rel)
+    template_h5 = resolve(base, template_rel)
+    dem_h5 = resolve(base, dem_rel)
 
-    # メインループ（待機）
-    try:
-        while True:
-            # 進捗ログ（従来のキーと揃える）
-            print("os.path.exists(path_to_element_fn): ", os.path.exists(path_to_element_fn))
-            print("not(path_to_filename): ", not os.path.exists(path_to_filename))
+    print("called main.")
+    print("element_fn: ", forces_h5)
+    print("dem_file  : ", dem_h5)
 
-            # forces（DEM の前段入力）が出るまで待つ
-            if not os.path.exists(path_to_element_fn):
-                print("sleep...")
-                time.sleep(1.0)
-                continue
-
-            # DEM.h5 が無ければ最小ファイルを作る（後工程の待ち解除用）
-            if not os.path.exists(path_to_filename):
-                ensure_minimal_dem_file(path_to_filename)
-
-            # 以降は常駐で監視（元の挙動に合わせて sleep し続ける）
-            time.sleep(1.0)
-
-    except KeyboardInterrupt:
-        # 終了時も静かに抜ける
-        return 0
+    while True:
+        # makeSleepFlag.py が置くフラグを見て起動
+        if os.path.exists("./sleep_flag.txt"):
+            ready = os.path.exists(forces_h5) and os.path.getsize(forces_h5) > 0
+            need = not dem_has_sigma_any(dem_h5)
+            print("ready_forces:", ready, "need_build_dem:", need)
+            if ready and need:
+                try:
+                    allstep_homogenize(root, dem_h5, forces_h5, template_h5)
+                except Exception as e:
+                    print("[ERR] homogenize failed:", e)
+            # 次の周期へ
+        time.sleep(1.0)
 
 
 if __name__ == "__main__":
