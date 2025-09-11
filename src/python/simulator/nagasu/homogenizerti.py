@@ -5,7 +5,8 @@ import taichi as ti
 from csv import writer
 import ctypes
 
-ti.init(arch=ti.gpu, default_fp=ti.f64)
+# ti.init(arch=ti.gpu, default_fp=ti.f64)
+ti.init(arch=ti.cpu, default_fp=ti.f64)
 #ti.init(arch=ti.cuda, default_fp=ti.f64)
 
 @ti.data_oriented
