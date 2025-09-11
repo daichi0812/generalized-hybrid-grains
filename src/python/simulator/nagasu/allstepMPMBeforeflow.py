@@ -144,6 +144,21 @@ for p in (save_candidates + [mpm_forces]):
         print(f"  - {p} (stat failed)")
 print(f"[INFO] forces H5 (watch) = {element_fn}")
 
+#grid_startを取ってくる（post 側の格子を参照）
+post_fn = root[1].attrib["post_stress"]
+allpost_homogenization_data = AllHomogenizeData()
+allpost_homogenization_data.load(post_fn)
+print(f"[INFO] post_stress = {post_fn}, frames={len(allpost_homogenization_data.all_step_homogenization)}")
+
+#gridのパラメータ
+h = float(root[4].attrib["h"])
+
+#density（今は未使用でも一応復元しておく）
+resume_fn = root[2].attrib["resume_MPM_fn"]
+resume_tree = ET.parse(resume_fn)
+resume_root = resume_tree.getroot()
+density = float(resume_root[2].attrib["density"])
+
 # ---- 安全なフレーム数カウンタ（MPM_data_num のフォールバック） ----
 def safe_count_frames(h5_fn):
     try:
