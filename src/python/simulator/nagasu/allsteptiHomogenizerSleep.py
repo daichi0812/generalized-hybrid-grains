@@ -227,6 +227,15 @@ def allstep_homogenize(root, out_dem_h5: str, forces_h5: str, template_h5: str):
 
     # 書き出し
     os.makedirs(os.path.dirname(out_dem_h5), exist_ok=True)
+    # --- 2025-09-11 ここから追加 ---
+    os.makedirs(os.path.dirname(strain_fn), exist_ok=True)
+    # 既存ファイルがあれば削除して新規作成
+    for fn in (strain_fn, out_dem_h5):
+        try:
+            os.remove(fn)
+        except FileNotFoundError:
+            pass
+    # --- 2025-09-11 ここまで追加 ---
     strain_data.save(strain_fn)
     allhomogenization_data.save(out_dem_h5)
     print(f"[OK] wrote homogenization: {out_dem_h5}")

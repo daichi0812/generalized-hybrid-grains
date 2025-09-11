@@ -125,15 +125,20 @@ sys.exit(1)
 PY
 )" || { echo "[ERR] MPM output not found or sigma missing. last_seen=${LAST_SEEN:-}"; exit 1; }
 
+if [ -n "${MPM_FILE:-}" ] && [ -n "${SIGMA_PATH:-}" ]; then
+  export MPM_FILE SIGMA_PATH
+else
+  echo "[ERR] detector did not set MPM_FILE/SIGMA_PATH"; exit 1
+fi
+
 # --- 期待の場所にブリッジ（MPMstress/MPM.h5:/0/sigma を再構成）
-if [ "$MPM_FILE" != "MPMstress/MPM.h5" ] || [ "$SIGMA_PATH" != "/0/sigma" ]; then
-  echo "[FIX] create MPMstress/MPM.h5:/0/sigma from $MPM_FILE:$SIGMA_PATH"
+if [ "$MPM_FILE" != "MPMstress/MPM.h5" ] || { [ "$SIGMA_PATH" != "/0/sigma" ] && [ "$SIGMA_PATH" != "/0/homogenization/sigma" ]; }; then
+  echo "[FIX] create MPMstress/MPM.h5:/0/(homogenization/)?sigma from $MPM_FILE:$SIGMA_PATH"
   "$PYTHON_PATH" - << 'PY'
 import os, h5py
 src_file = os.environ["MPM_FILE"]
 src_path = os.environ["SIGMA_PATH"]
 dst_file = "MPMstress/MPM.h5"
-dst_grp  = "0"
 
 # 読み出し
 with h5py.File(src_file, "r") as s:
@@ -143,9 +148,13 @@ with h5py.File(src_file, "r") as s:
 if os.path.exists(dst_file):
     os.remove(dst_file)
 with h5py.File(dst_file, "w") as t:
-    g = t.create_group(dst_grp)
-    g.create_dataset("sigma", data=data)
-print("[OK] wrote", dst_file, "/0/sigma")
+    g0 = t.create_group("0")
+    # 期待構造その1: /0/homogenization/sigma
+    hg = g0.create_group("homogenization")
+    hg.create_dataset("sigma", data=data)
+    # 互換: /0/sigma も作っておく（読む側がどちらでもOKに）
+    g0.create_dataset("sigma", data=data)
+print("[OK] wrote", dst_file, "(/0/homogenization/sigma and /0/sigma)")
 PY
 fi
 
