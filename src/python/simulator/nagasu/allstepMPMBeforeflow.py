@@ -100,13 +100,25 @@ allhomogenization_data = AllHomogenizeData()
 pre_fn = root[1].attrib["pre_stress"]
 
 # --- 既存 pre を消すだけ（ここでは save しない） ---
-import os, h5py
+import os, time, h5py
 os.makedirs(os.path.dirname(pre_fn), exist_ok=True)
 try:
     os.remove(pre_fn)
 except FileNotFoundError:
     pass
-# （※ここで allhomogenization_data.save(pre_fn) を呼ばない）
+
+print(f"[INFO] XML MPMstress = {element_fn}")
+if not os.path.isabs(element_fn):
+    element_fn = os.path.abspath(element_fn)
+save_dir = os.path.dirname(pre_fn)
+forces_candidate = os.path.join(save_dir, "serialized_forces.h5")
+
+# XML が serialized_forces.h5 を指していなければ上書き
+if os.path.basename(element_fn) != "serialized_forces.h5":
+    print(f"[WARN] MPM_data_num は serialized_forces.h5 を想定。override -> {forces_candidate}")
+    element_fn = forces_candidate
+
+print(f"[INFO] forces H5 = {element_fn}")
 
 #grid_startを取ってくる
 post_fn = root[1].attrib["post_stress"]
@@ -123,22 +135,30 @@ resume_root = resume_tree.getroot()
 density = float(resume_root[2].attrib["density"])
 
 # --- forces が書かれるまで待つ ---
-def wait_for_forces(h5_fn, min_frames=1, timeout_sec=600, poll_sec=0.5):
+def wait_for_forces(h5_fn, min_frames=1, timeout_sec=120, poll_sec=0.5):
     t0 = time.time()
-    last = -1
+    last_n = -1
     while True:
+        exists = os.path.exists(h5_fn)
+        size   = os.path.getsize(h5_fn) if exists else 0
         try:
-            n = MPM_data_num(h5_fn)
+            n = MPM_data_num(h5_fn) if exists and size > 0 else 0
         except Exception:
             n = 0
+
         if n >= min_frames:
+            print(f"[INFO] serialized_forces detected: frames={n}, size={size}B, file={h5_fn}")
             return n
+
         if time.time() - t0 > timeout_sec:
-            raise TimeoutError(f"Timeout waiting for {h5_fn} to have >= {min_frames} frames (last n={n})")
-        # 進捗が見えるようにたまにログ出し
-        if n != last:
-            print(f"[WAIT] serialized_forces: {n} frames (waiting for >= {min_frames})")
-            last = n
+            raise TimeoutError(
+                f"Waited {timeout_sec}s but no frames. "
+                f"exists={exists}, size={size}, frames={n}, file={h5_fn}"
+            )
+
+        if n != last_n:
+            print(f"[WAIT] {os.path.basename(h5_fn)}: frames={n}, size={size}B")
+            last_n = n
         time.sleep(poll_sec)
 
 # === タイムステップ決定（post 側は既に 1000 ある想定） ===
