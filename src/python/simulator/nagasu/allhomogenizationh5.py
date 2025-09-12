@@ -68,22 +68,38 @@ class AllHomogenizeData:
         self._load_homogenization_from_idx(fn, idx)
                       
     def save(self, file_name):
+        print("ファイル名: " + file_name) #
         with h5py.File(file_name, 'a') as h5_homogenization:
+            print(len(self.all_step_homogenization)) #
             dt_group_num = len(self.all_step_homogenization)
+            print("なう")
             for i in range(dt_group_num):
+                print("のう")
+                print(f"i: {i}")
                 data_group = h5_homogenization.create_group(str(self.all_timestep[i]))
+                print("ああああ" + str(self.all_timestep[i])) #
                 h_group = data_group.create_group('homogenization')
+                # print(h_group) #
                 homogenization = self.all_step_homogenization[i].homogenization
+                # print(homogenization) #
                 sigma_array = np.zeros((2, 2, len(homogenization)), dtype=np.float64)
+                # print(sigma_array) #
                 grid_p_array = np.zeros((2, len(homogenization)), dtype=np.float64)
+                # print(grid_p_array) #
                 resolution = np.zeros((2, len(homogenization)), dtype=np.int32)
+                # print(resolution) #
                 h = np.zeros(len(homogenization), dtype=np.float64)
+                # print(h) #
                 
                 for j in range(len(homogenization)):
                     sigma_array[:, :, j] = homogenization[j].sigma
+                    # print(sigma_array) #
                     grid_p_array[:, j] = homogenization[j].grid_p
+                    # print(grid_p_array) #
                     resolution[:, j] = homogenization[j].resolution
+                    # print(resolution)   #   
                     h[j] = homogenization[j].h
+                    # print(h) # 
                 
                 h_group.create_dataset('sigma', data=sigma_array)
                 h_group.create_dataset('grid_p', data=grid_p_array)

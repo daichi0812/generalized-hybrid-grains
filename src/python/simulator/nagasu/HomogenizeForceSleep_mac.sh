@@ -1,33 +1,20 @@
+# 純正コード
+
 #!/bin/bash
-set -Eeuo pipefail
 cd "$(dirname "$0")" || exit
 tmp=/tmp/$$exec_taichi
-
-# Prefix="/Volumes/ExtremeSSD/python/analysis/python/analysis"
 Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu"
-
 DEM="./DEMstress/DEM.h5"
-MPM_H5="./MPMstress/MPM.h5"
-FORCES="./Save_square11_flow/serialized_forces.h5"
 PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
+MaxLoop=1500
 
-MaxLoop=1000
 ${PYTHON_PATH} ${Prefix}/initResumefn.py homogenize_stress.xml
 {
-# cat << EOF > ${tmp}
-# #!/bin/bash
-# cd "${Prefix}" || exit 1
-# ${PYTHON_PATH} ${Prefix}/allsteptiHomogenizerSleep.py ${Prefix}/homogenize_stress.xml
-# EOF
-# chmod 777 ${tmp}
-
-# 2025-09-09 追加
-cat << 'LAUNCH' > "$tmp"
+cat << EOF > ${tmp}
 #!/bin/bash
-cd "/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu" || exit 1
-/opt/homebrew/Caskroom/miniforge/base/bin/python /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/allsteptiHomogenizerSleep.py /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/homogenize_stress.xml
-LAUNCH
-chmod 777 "$tmp"
+${PYTHON_PATH} ${Prefix}/allsteptiHomogenizerSleep.py ${Prefix}/homogenize_stress.xml
+EOF
+chmod 777 ${tmp}
 
 } &&{
 open ${tmp}
@@ -45,148 +32,222 @@ chmod 777 ./MPM2D
 
 for _ in $(seq $MaxLoop)
 do
-  "${PYTHON_PATH}" "${Prefix}/deleteIntermediateFile.py" DEM_test_resume.xml
+  ${PYTHON_PATH} ${Prefix}/deleteIntermediateFile.py DEM_test_resume.xml
+  
   
   ./rigidbody2dsim DEM_test_resume.xml
 
-  "${PYTHON_PATH}" "${Prefix}/makeSleepFlag.py"
+  ${PYTHON_PATH} ${Prefix}/makeSleepFlag.py
 
-  # while [ ! -e $DEM ]
-  # do
-  #   sleep 0.005
-  # done
-  # ./MPM2D herschel_bulkley.xml
-
-  # 2025-09-09 追加 ここから
-
-  # --- 前段の forces を持つ(存在かつ非ゼロ)
-  while [ ! -s "$FORCES" ]; do
-    echo "[WAIT] forces not ready: $FORCES"
-    sleep 0.1
+  while [ ! -e $DEM ]
+  do
+    sleep 1.0
   done
-
-  # --- DEM.h5 に /0/homogenization が出るまで待つ（ <- allstepti が作る)
-  echo "[WAIT] DEMstress/DEM.h5 -> /0/homogenization/sigma"
-  "$PYTHON_PATH" - << 'PY'
-import sys, time, os, h5py
-fn = "DEMstress/DEM.h5"
-def ready():
-    if not os.path.exists(fn): return False
-    try:
-        with h5py.File(fn, "r") as f:
-            return "0" in f and "homogenization" in f["0"] and "sigma" in f["0/homogenization"]
-    except Exception:
-        return False
-for _ in range(600):
-    if ready():
-        print("[OK] DEM.h5 has /0/homogenization/sigma"); sys.exit(0)
-    time.sleep(0.1)
-print("[ERR] DEM.h5 not ready"); sys.exit(1)
-PY
-
-  echo "[RUN] MPM2D"
   ./MPM2D herschel_bulkley.xml
 
-# --- MPM 出力を自動検出（任意の整数グループ & 2種類のsigmaパスに対応）
-echo "[WAIT] scan MPMstress/*.h5 for sigma (any group)"
-eval "$("$PYTHON_PATH" - << 'PY'
-import sys, time, os, glob, h5py, re
-def try_file(fp):
-    with h5py.File(fp,"r") as f:
-        for g in f.keys():
-            if not re.fullmatch(r"\d+", g):  # 0,1,2,... のグループだけ見る
-                continue
-            if "sigma" in f[g]:
-                print(f'MPM_FILE="{fp}"')
-                print(f'SIGMA_PATH="/{g}/sigma"')
-                return True
-            if "homogenization" in f[g] and "sigma" in f[f"{g}/homogenization"]:
-                print(f'MPM_FILE="{fp}"')
-                print(f'SIGMA_PATH="/{g}/homogenization/sigma"')
-                return True
-    return False
+  ${PYTHON_PATH} ${Prefix}/allstepMPMBeforeflow.py homogenize_stress.xml
+ 
+  ${PYTHON_PATH} ${Prefix}/storeStressPair.py homogenize_stress.xml
 
-deadline = time.time() + 120
-last = None
-while time.time() < deadline:
-    for fp in sorted(glob.glob("MPMstress/*.h5")):
-        try:
-            if try_file(fp):
-                sys.exit(0)
-            last = fp
-        except Exception:
-            last = fp
-    time.sleep(0.2)
-
-if last:
-    print(f'LAST_SEEN="{last}"')
-print("No sigma found", file=sys.stderr)
-sys.exit(1)
-PY
-)" || { echo "[ERR] MPM output not found or sigma missing. last_seen=${LAST_SEEN:-}"; exit 1; }
-
-if [ -n "${MPM_FILE:-}" ] && [ -n "${SIGMA_PATH:-}" ]; then
-  export MPM_FILE SIGMA_PATH
-else
-  echo "[ERR] detector did not set MPM_FILE/SIGMA_PATH"; exit 1
-fi
-
-# --- 期待の場所にブリッジ（/0/homogenization を“まるごと”コピーして /0/sigma も作る）
-if [ "$MPM_FILE" != "MPMstress/MPM.h5" ] || { [ "$SIGMA_PATH" != "/0/sigma" ] && [ "$SIGMA_PATH" != "/0/homogenization/sigma" ]; }; then
-  echo "[FIX] create full /0/homogenization from $MPM_FILE:$SIGMA_PATH"
-  "$PYTHON_PATH" - << 'PY'
-import os, posixpath, h5py
-
-src_file = os.environ["MPM_FILE"]
-src_path = os.environ["SIGMA_PATH"]        # 例) /1/homogenization/sigma または /1/sigma
-dst_file = "MPMstress/MPM.h5"
-
-def step_group_of(path):                   # "/1/..." -> "1"
-    return path.strip("/").split("/")[0]
-
-with h5py.File(src_file, "r") as s:
-    step = step_group_of(src_path)
-    # 元のファイルで /<step>/homogenization があればそこを基底に、無ければ /<step> を基底にする
-    base_src = f"/{step}/homogenization" if "homogenization" in s[step] else f"/{step}"
-    src_grp = s[base_src]
-
-    # 既存の出力を作り直し
-    if os.path.exists(dst_file):
-        os.remove(dst_file)
-
-    with h5py.File(dst_file, "w") as t:
-        g0 = t.create_group("0")
-        hg = g0.create_group("homogenization")
-
-        def copy_items(g_src, g_dst):
-            for k, v in g_src.items():
-                if isinstance(v, h5py.Dataset):
-                    g_dst.create_dataset(k, data=v[()])
-                elif isinstance(v, h5py.Group):
-                    copy_items(v, g_dst.create_group(k))
-        copy_items(src_grp, hg)
-
-        # 互換のため /0/sigma も用意（存在すれば中身を複製）
-        if "sigma" in hg:
-            g0.create_dataset("sigma", data=hg["sigma"][()])
-
-print("[OK] wrote", dst_file, "with full /0/homogenization (incl. center_of_mass)")
-PY
-fi
-
-# 検証（center_of_mass があることを確認）
-"$PYTHON_PATH" - << 'PY'
-import h5py, sys
-with h5py.File("MPMstress/MPM.h5","r") as f:
-    ok = "center_of_mass" in f["0/homogenization"]
-print("[CHK] /0/homogenization/center_of_mass:", "OK" if ok else "MISSING")
-sys.exit(0 if ok else 1)
-PY
-
-  "$PYTHON_PATH" "$Prefix/allstepMPMBeforeflow.py" homogenize_stress.xml
-  "$PYTHON_PATH" "$Prefix/storeStressPair.py" homogenize_stress.xml
-  "$PYTHON_PATH" "$Prefix/rewriteResumefn.py" homogenize_stress.xml
+  ${PYTHON_PATH} ${Prefix}/rewriteResumefn.py homogenize_stress.xml
 done
-
 touch exit_flag.txt
 exit
+
+# ------------------------------------------------------------------------------------------------------------------------------------
+
+# # --- 修正コード ----
+# #!/bin/bash
+# set -Eeuo pipefail
+# cd "$(dirname "$0")" || exit
+# tmp=/tmp/$$exec_taichi
+
+# # Prefix="/Volumes/ExtremeSSD/python/analysis/python/analysis"
+# Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu"
+
+# DEM="./DEMstress/DEM.h5"
+# MPM_H5="./MPMstress/MPM.h5"
+# FORCES="./Save_square11_flow/serialized_forces.h5"
+# PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
+
+# MaxLoop=1000
+# ${PYTHON_PATH} ${Prefix}/initResumefn.py homogenize_stress.xml
+# {
+# cat << EOF > ${tmp}
+# #!/bin/bash
+# cd "${Prefix}" || exit 1
+# ${PYTHON_PATH} ${Prefix}/allsteptiHomogenizerSleep.py ${Prefix}/homogenize_stress.xml
+# EOF
+# chmod 777 ${tmp}
+
+# # # 2025-09-09 追加
+# # cat << 'LAUNCH' > "$tmp"
+# # #!/bin/bash
+# # cd "/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu" || exit 1
+# # /opt/homebrew/Caskroom/miniforge/base/bin/python /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/allsteptiHomogenizerSleep.py /Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu/homogenize_stress.xml
+# # LAUNCH
+# # chmod 777 "$tmp"
+
+# } &&{
+# open ${tmp}
+
+# } &&{
+# echo "taichi is activated."
+
+# } ||{
+# echo "Activating taichi is Failed."
+# }
+
+
+# chmod 777 ./rigidbody2dsim
+# chmod 777 ./MPM2D
+
+# for _ in $(seq $MaxLoop)
+# do
+#   "${PYTHON_PATH}" "${Prefix}/deleteIntermediateFile.py" DEM_test_resume.xml
+  
+#   ./rigidbody2dsim DEM_test_resume.xml
+
+#   "${PYTHON_PATH}" "${Prefix}/makeSleepFlag.py"
+
+#   # while [ ! -e $DEM ]
+#   # do
+#   #   sleep 0.005
+#   # done
+#   # ./MPM2D herschel_bulkley.xml
+
+#   # 2025-09-09 追加 ここから
+
+#   # --- 前段の forces を持つ(存在かつ非ゼロ)
+#   while [ ! -s "$FORCES" ]; do
+#     echo "[WAIT] forces not ready: $FORCES"
+#     sleep 0.1
+#   done
+
+#   # --- DEM.h5 に /0/homogenization が出るまで待つ（ <- allstepti が作る)
+#   echo "[WAIT] DEMstress/DEM.h5 -> /0/homogenization/sigma"
+#   "$PYTHON_PATH" - << 'PY'
+# import sys, time, os, h5py
+# fn = "DEMstress/DEM.h5"
+# def ready():
+#     if not os.path.exists(fn): return False
+#     try:
+#         with h5py.File(fn, "r") as f:
+#             return "0" in f and "homogenization" in f["0"] and "sigma" in f["0/homogenization"]
+#     except Exception:
+#         return False
+# for _ in range(600):
+#     if ready():
+#         print("[OK] DEM.h5 has /0/homogenization/sigma"); sys.exit(0)
+#     time.sleep(0.1)
+# print("[ERR] DEM.h5 not ready"); sys.exit(1)
+# PY
+
+#   echo "[RUN] MPM2D"
+#   ./MPM2D herschel_bulkley.xml
+
+# # --- MPM 出力を自動検出（任意の整数グループ & 2種類のsigmaパスに対応）
+# echo "[WAIT] scan MPMstress/*.h5 for sigma (any group)"
+# eval "$("$PYTHON_PATH" - << 'PY'
+# import sys, time, os, glob, h5py, re
+# def try_file(fp):
+#     with h5py.File(fp,"r") as f:
+#         for g in f.keys():
+#             if not re.fullmatch(r"\d+", g):  # 0,1,2,... のグループだけ見る
+#                 continue
+#             if "sigma" in f[g]:
+#                 print(f'MPM_FILE="{fp}"')
+#                 print(f'SIGMA_PATH="/{g}/sigma"')
+#                 return True
+#             if "homogenization" in f[g] and "sigma" in f[f"{g}/homogenization"]:
+#                 print(f'MPM_FILE="{fp}"')
+#                 print(f'SIGMA_PATH="/{g}/homogenization/sigma"')
+#                 return True
+#     return False
+
+# deadline = time.time() + 120
+# last = None
+# while time.time() < deadline:
+#     for fp in sorted(glob.glob("MPMstress/*.h5")):
+#         try:
+#             if try_file(fp):
+#                 sys.exit(0)
+#             last = fp
+#         except Exception:
+#             last = fp
+#     time.sleep(0.2)
+
+# if last:
+#     print(f'LAST_SEEN="{last}"')
+# print("No sigma found", file=sys.stderr)
+# sys.exit(1)
+# PY
+# )" || { echo "[ERR] MPM output not found or sigma missing. last_seen=${LAST_SEEN:-}"; exit 1; }
+
+# if [ -n "${MPM_FILE:-}" ] && [ -n "${SIGMA_PATH:-}" ]; then
+#   export MPM_FILE SIGMA_PATH
+# else
+#   echo "[ERR] detector did not set MPM_FILE/SIGMA_PATH"; exit 1
+# fi
+
+# # --- 期待の場所にブリッジ（/0/homogenization を“まるごと”コピーして /0/sigma も作る）
+# if [ "$MPM_FILE" != "MPMstress/MPM.h5" ] || { [ "$SIGMA_PATH" != "/0/sigma" ] && [ "$SIGMA_PATH" != "/0/homogenization/sigma" ]; }; then
+#   echo "[FIX] create full /0/homogenization from $MPM_FILE:$SIGMA_PATH"
+#   "$PYTHON_PATH" - << 'PY'
+# import os, posixpath, h5py
+
+# src_file = os.environ["MPM_FILE"]
+# src_path = os.environ["SIGMA_PATH"]        # 例) /1/homogenization/sigma または /1/sigma
+# dst_file = "MPMstress/MPM.h5"
+
+# def step_group_of(path):                   # "/1/..." -> "1"
+#     return path.strip("/").split("/")[0]
+
+# with h5py.File(src_file, "r") as s:
+#     step = step_group_of(src_path)
+#     # 元のファイルで /<step>/homogenization があればそこを基底に、無ければ /<step> を基底にする
+#     base_src = f"/{step}/homogenization" if "homogenization" in s[step] else f"/{step}"
+#     src_grp = s[base_src]
+
+#     # 既存の出力を作り直し
+#     if os.path.exists(dst_file):
+#         os.remove(dst_file)
+
+#     with h5py.File(dst_file, "w") as t:
+#         g0 = t.create_group("0")
+#         hg = g0.create_group("homogenization")
+
+#         def copy_items(g_src, g_dst):
+#             for k, v in g_src.items():
+#                 if isinstance(v, h5py.Dataset):
+#                     g_dst.create_dataset(k, data=v[()])
+#                 elif isinstance(v, h5py.Group):
+#                     copy_items(v, g_dst.create_group(k))
+#         copy_items(src_grp, hg)
+
+#         # 互換のため /0/sigma も用意（存在すれば中身を複製）
+#         if "sigma" in hg:
+#             g0.create_dataset("sigma", data=hg["sigma"][()])
+
+# print("[OK] wrote", dst_file, "with full /0/homogenization (incl. center_of_mass)")
+# PY
+# fi
+
+# # 検証（center_of_mass があることを確認）
+# "$PYTHON_PATH" - << 'PY'
+# import h5py, sys
+# with h5py.File("MPMstress/MPM.h5","r") as f:
+#     ok = "center_of_mass" in f["0/homogenization"]
+# print("[CHK] /0/homogenization/center_of_mass:", "OK" if ok else "MISSING")
+# sys.exit(0 if ok else 1)
+# PY
+
+#   "$PYTHON_PATH" "$Prefix/allstepMPMBeforeflow.py" homogenize_stress.xml
+#   "$PYTHON_PATH" "$Prefix/storeStressPair.py" homogenize_stress.xml
+#   "$PYTHON_PATH" "$Prefix/rewriteResumefn.py" homogenize_stress.xml
+# done
+
+# touch exit_flag.txt
+# exit
+
+# # --- 修正コード ここまで ----
