@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 import sys
 import time
 from csv import writer
-import ctypes
 
 def main(args):
     resume_xml_fn = args[1]
@@ -32,7 +31,7 @@ def main(args):
         time.sleep(1.0)
         # forceファイルが生成された場合
         print("sleep...")
-        if os.path.exists('./sleep_flag.txt'):
+        if os.path.exists(dirname + '/sleep_flag.txt'):
             print("wake up!")
             # "." から始まるパスは macOS 用ではない(おそらく Windows 用)
             # path_to_element_fn = "." + dirname + "/" + element_fn
