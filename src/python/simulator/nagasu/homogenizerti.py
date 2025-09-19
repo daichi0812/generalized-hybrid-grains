@@ -6,8 +6,12 @@ import taichi as ti
 from csv import writer
 import ctypes
 
-# ti.init(arch=ti.gpu, default_fp=ti.f64)
-ti.init(arch=ti.cpu, default_fp=ti.f64)
+# ti.init(arch=ti.cpu, default_fp=ti.f64)
+# ti.init(arch=ti.cpu, default_fp=ti.f32)
+
+ti.init(arch=ti.cpu, default_fp=ti.f32)
+
+# ti.init(arch=ti.gpu, default_fp=ti.f32)
 #ti.init(arch=ti.cuda, default_fp=ti.f64)
 
 @ti.data_oriented
@@ -41,8 +45,9 @@ class TiHomogenizationGrid:
         min_c[0] = np.amin(allforce_data.all_step_ForceData_position[:, 0])
         min_c[1] = np.amin(allforce_data.all_step_ForceData_position[:, 1])
 
-        _i = (min_c / h + grid_start_offset_ratio).astype(int)
+        _i = (np.floor(min_c / h) + grid_start_offset_ratio).astype(int)
         numpy_grid_start = h * (_i - grid_start_offset_ratio)
+        print("grid_start: ", numpy_grid_start)
         self.grid_start = numpy_grid_start
         self.grid_start = ti.Vector(numpy_grid_start)
         self.resolution = ti.Vector(np.ceil((max_c - self.grid_start) / h).astype(int))
@@ -51,10 +56,46 @@ class TiHomogenizationGrid:
         self.cell_volume = float(self.h ** 2)
         self.sigma.fill(0.0)
 
-        self.arm.from_numpy(allforce_data.all_step_ForceData_arm)
-        self.force.from_numpy(allforce_data.all_step_ForceData_force)
-        self.position.from_numpy(allforce_data.all_step_ForceData_position)
+        # --- 元のコード: 要素数を合わせるためコメントアウト ---
+        # self.arm.from_numpy(allforce_data.all_step_ForceData_arm) 
+        # self.force.from_numpy(allforce_data.all_step_ForceData_force)
+        # self.position.from_numpy(allforce_data.all_step_ForceData_position)
+        # ----------------------------------------``
+
+        # --- 2025-09-19 追加: numpy から taichi に渡す配列の必要な要素数をゼロ埋め ---
+        arm_arr = allforce_data.all_step_ForceData_arm.astype(np.float32, copy=False)
+        arm_N = arm_arr.shape[0]
+        arm_M = self.arm.shape[0]
+        arm_buf = np.zeros((arm_M, 2), dtype=np.float32)
+        arm_buf[:arm_N] = arm_arr
+        print('arm shape\t', self.arm.shape)
+        print('allforce_data.all_step_ForceData_arm\t', allforce_data.all_step_ForceData_arm.shape)
+        self.arm.from_numpy(arm_buf)
+
+        force_arr = allforce_data.all_step_ForceData_force.astype(np.float32, copy=False)
+        force_N = force_arr.shape[0]
+        force_M = self.force.shape[0]
+        force_buf = np.zeros((force_M, 2), dtype=np.float32)
+        force_buf[:force_N] = force_arr
+        print('self.force\t', self.force.shape)
+        print('allforce_data.all_step_ForceData_force\t', allforce_data.all_step_ForceData_force.shape)
+        self.force.from_numpy(force_buf)
+
+        position_arr = allforce_data.all_step_ForceData_position.astype(np.float32, copy=False)
+        position_N = position_arr.shape[0]
+        position_M = self.position.shape[0]
+        position_buf = np.zeros((position_M, 2), dtype=np.float32)
+        position_buf[:position_N] = position_arr
+        print('self.position\t', self.position.shape)
+        print('allforce_data.all_step_ForceData_position\t', allforce_data.all_step_ForceData_position.shape)
+        self.position.from_numpy(position_buf)
+        # --- 2025-09-19 ここまで ---
         self.force_num = allforce_data.force_num
+        print("force_num: ", self.force_num)
+        print("resolution: ", self.resolution)
+        print("N: ", self.N)
+        print("np.shape(allforce_data.all_step_ForceData_position): ", np.shape(allforce_data.all_step_ForceData_position))
+        print("np.shape(allforce_data.all_step_ForceData_force): ", np.shape(allforce_data.all_step_ForceData_force))
 
     @ti.kernel
     def fillForceDataZero(self):
@@ -71,6 +112,7 @@ class TiHomogenizationGrid:
             cell = (self.position[f] - self.grid_start) / self.h
             cell_idx = ti.floor(cell)
             flat_idx = int(cell_idx[1]) * self.resolution[0] + int(cell_idx[0])
+            # print("[DEBUG] - cell_idx, flat_idx, f, self.position[f]:  ", cell_idx, flat_idx, f, self.position[f])
 
             #Christoffesen formula
             self.sigma[flat_idx] += 0.5 * (self.arm[f].outer_product(self.force[f]) + self.force[f].outer_product(self.arm[f])) / self.cell_volume  # REVIEW:重みづけ、接触点周囲に影響

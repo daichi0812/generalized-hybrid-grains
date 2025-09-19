@@ -4,6 +4,6 @@
   <particles filename="initialpoints.hdr" density="400.0" />
   <constitutive_model type="Herschel_Bulkley" kappa="14000000.0" mu="6461500.4" sigma_y="1.0" n="0.43" eta="200.0" />
   <external_force friction="0.1" g="9.8" />
-  <resume templates="Save_square11_flow/square11_flow_template.h5" forces="Save_square11_flow/serialized_forces.h5" homogenization="DEMstress/DEM.h5" />
-  <serialization folder="Save_square11_flow" forces="MPM.h5" cell_height="0.04" mode="1" processing_time="Save_square11_flow/MPM_Processing_Time_square11_flow.csv" />
+  <resume templates="Save_square11_flow/square11_flow_template.h5" forces="Save_square11_flow/serialized_forces.h5" homogenization="DEMstress/DEM2.h5" />
+  <serialization folder="Save_square11_flow" forces="serialized_sigma.h5" cell_height="0.04" mode="1" processing_time="Save_square11_flow/MPM_Processing_Time_square11_flow.csv" />
 </mpm2d>

@@ -17,6 +17,7 @@ tree = ET.parse(resume_xml_fn)
 root = tree.getroot()
 
 element_fn = root[0].attrib["MPMstress"]
+print("element_fn: " + element_fn)
 allelements = AllParticleHomogenizeData()
 #全ステップ粒子ロードする
 #allelements.load(element_fn)

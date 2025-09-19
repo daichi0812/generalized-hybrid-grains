@@ -43,6 +43,7 @@ do
   do
     sleep 1.0
   done
+
   ./MPM2D herschel_bulkley.xml
 
   ${PYTHON_PATH} ${Prefix}/allstepMPMBeforeflow.py homogenize_stress.xml

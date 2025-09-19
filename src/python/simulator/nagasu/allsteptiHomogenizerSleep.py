@@ -32,7 +32,6 @@ def main(args):
         # forceファイルが生成された場合
         print("sleep...")
         if os.path.exists(dirname + '/sleep_flag.txt'):
-            print("wake up!")
             # "." から始まるパスは macOS 用ではない(おそらく Windows 用)
             # path_to_element_fn = "." + dirname + "/" + element_fn
             # path_to_filename =  "." + dirname + "/" + filename
@@ -47,13 +46,13 @@ def main(args):
             print("not(path_to_filename): ", os.path.exists(path_to_filename))  # False と出力されるのが正解？
             if os.path.exists(path_to_element_fn) and not os.path.exists(path_to_filename):
                 print("receive: ", filename)
-                allstepHomogenize(root, homogenization_grid, path_to_filename, path_to_element_fn, path_to_template)
+                allstepHomogenize(root, homogenization_grid, path_to_filename, path_to_element_fn, path_to_template, dirname)
         if os.path.exists("./exit_flag.txt"):
             print("exit")
             os.remove("./exit_flag.txt")
             sys.exit()
 
-def allstepHomogenize(root, homogenization_grid, filename, element_fn, template_fn):
+def allstepHomogenize(root, homogenization_grid, filename, element_fn, template_fn, dirname):
     strain_fn = root[1].attrib["strain"]
 
     packing_fraction_threshold = float(root[3].attrib["packing_fraction_threshold"])
@@ -89,13 +88,19 @@ def allstepHomogenize(root, homogenization_grid, filename, element_fn, template_
     #全ステップの力を均質化する
     max_loop = force_data_num(element_fn)
 
-    for i in range(max_loop):
-        allforce_data.load_from_idx_for_simulation(element_fn, i)
+    print("max_loop: ", max_loop)
 
+    for i in range(max_loop):
+        print("step: ", i)
+
+        allforce_data.load_from_idx_for_simulation(element_fn, i)
+        print("min: ", np.min(allforce_data.all_step_ForceData_position))
+        print("max: ", np.max(allforce_data.all_step_ForceData_position))
+        print("ロードするファイル名: ", element_fn)
         homogenization_data = HomogenizeData()
 
         remove_outlier = RemoveOutlier()
-
+        
         homogenization_grid.setData(grid_start_offset_ratio, h, allforce_data)
 
         homogenization_grid.calcHomogenizeStress()
@@ -112,10 +117,10 @@ def allstepHomogenize(root, homogenization_grid, filename, element_fn, template_
 
         allhomogenization_data.all_step_homogenization.append(homogenization_data)
 
-    strain_data.save(strain_fn)
+    # strain_data.save(strain_fn) # Mac だと無理だったのでコメントアウト
 
-    # print("is strain_fn:s ", os.path.exists(dirname + strain_fn))
-    # strain_data.save(dirname + strain_fn)
+    print("is strain_fn:s ", os.path.exists(dirname + '/' + strain_fn))
+    strain_data.save(dirname + '/' + strain_fn)
 
     allhomogenization_data.save(filename)
 
