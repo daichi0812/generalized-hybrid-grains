@@ -201,7 +201,7 @@ class GrainRender:
         if range_max <= 0:
             range_max = max_count
 
-        element_fn = input_node_data.elements_template + ".h5"
+        element_fn = input_node_data.elements_template
         key_list = AllSceneData.get_key_list(element_fn)
         self.all_scene_data = AllSceneData()
         output = 0
