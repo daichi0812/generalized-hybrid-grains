@@ -583,7 +583,16 @@ cd Visualize/nagasu
     ex)Visualization/nagasu/IOData/Circle/11/circle11_flow_template.h5
 
 #### 2. 連番画像の作成
-render_obj.batを実行
+render_obj.batを実行(windows)
+Macなら `Visualize/nagasu` で以下を実行して動画を作成する（事前にmovieディレクトリを作っておく必要あり）
+
+```zsh
+ffmpeg -framerate 30 \
+       -start_number 0 \
+       -i png/png_square11/%d.png \
+       -vcodec libx264 -pix_fmt yuv420p \
+       movie/square11.mp4
+```
 
 #### 3. 連番画像を動画化
     3.1 ffmpeg_pathにffmpeg.exeまでのpathに設定。
