@@ -583,11 +583,9 @@ cd Visualize/nagasu
     ex)Visualization/nagasu/IOData/Circle/11/circle11_flow_template.h5
 
 #### 2. 連番画像の作成
-Windows:
-`render_obj.bat`を実行
 
-Mac:
-`render_obj.sh`を実行
+Windows: `render_obj.bat`を実行
+Mac: `render_obj.sh`を実行
 
 #### 3. 連番画像を動画化
 
