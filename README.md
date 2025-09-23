@@ -585,6 +585,7 @@ cd Visualize/nagasu
 #### 2. 連番画像の作成
 
 Windows: `render_obj.bat`を実行
+
 Mac: `render_obj.sh`を実行
 
 #### 3. 連番画像を動画化
