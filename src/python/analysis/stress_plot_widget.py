@@ -88,7 +88,7 @@ class StressPlotCanvas(FigureCanvas):
 
                     if current - previous < self.stride:
                         continue
-
+                    
                     pre_principal_stress, post_principal_stress = self.compute_principal_stress(stress_pair)
 
                     if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
@@ -111,7 +111,15 @@ class StressPlotCanvas(FigureCanvas):
 
     @staticmethod
     def compute_principal_stress(stress_pair):
+        if(np.isnan(stress_pair.pre_stress).any()):
+            print("pre_stress is nan")
+            print("pre_stress: \n", stress_pair.pre_stress)
+            stress_pair.pre_stress = np.nan_to_num(stress_pair.pre_stress)
         pre_l, pre_q = np.linalg.eig(stress_pair.pre_stress)
+        if(np.isnan(stress_pair.post_stress).any()):
+            print("post_stress is nan")
+            print("post_stress: \n", stress_pair.post_stress)
+            stress_pair.post_stress = np.nan_to_num(stress_pair.post_stress)
         post_l, post_q = np.linalg.eig(stress_pair.post_stress)
 
         if pre_l[0] >= pre_l[1]:

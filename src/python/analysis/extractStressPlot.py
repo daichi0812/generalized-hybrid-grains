@@ -265,17 +265,21 @@ class UiWidget(QtWidgets.QWidget):
         self.dt_gl_slider.setMaximum(len(self.all_stress_pair_data.stress_pair_data_array) - 1)
 
     def load(self):
-        # stress_fn = "Save/stress_pair.h5"
-        # self.scene_fn = "Save/serialized_forces.h5"
+        stress_fn = "Save/stress_pair.h5"
+        self.scene_fn = "Save/serialized_forces.h5"
 
         # プロット用応力データ
-        stress_fn = "simulated_data/11/compressed_stress.h5"
+        # stress_fn = "simulated_data/11/compressed_stress.h5"
+        stress_fn = "simulated_data/square11/output/compressed_stress.h5"
 
         # 描画用粒子データ
-        self.scene_fn = "simulated_data/11/element_data_0.500000.h5"
+        # self.scene_fn = "simulated_data/11/element_data_0.500000.h5"
+        # self.scene_fn = "simulated_data/square11/element_data_0.500000.h5"
+        self.scene_fn = "simulated_data/square11/element_data.h5"
 
         # テンプレートファイル
-        self.template_fn = "simulated_data/11/square_merge_template.h5"
+        # self.template_fn = "simulated_data/11/square_merge_template.h5"
+        self.template_fn = "simulated_data/square11/square11_flow_template.h5"
 
         self.all_stress_pair_data.load(stress_fn)
         self.stress_plot_canvas.set_all_stress_pair_data(self.all_stress_pair_data)

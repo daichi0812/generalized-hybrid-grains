@@ -70,7 +70,16 @@ class StressPairEdit:
 
     @staticmethod
     def compute_principal_stress(stress_pair: StressPair) -> tuple[ndarray, ndarray]:
+        if(np.isnan(stress_pair.pre_stress).any()):
+            print("pre_stress is nan")
+            print("pre_stress:\n", stress_pair.pre_stress)
+            stress_pair.pre_stress = np.nan_to_num(stress_pair.pre_stress)
         pre_l, pre_q = np.linalg.eig(stress_pair.pre_stress)
+
+        if(np.isnan(stress_pair.post_stress).any()):
+            print("post_stress is nan")
+            print("post_stress:\n", stress_pair.post_stress)
+            stress_pair.pre_stress = np.nan_to_num(stress_pair.post_stress)
         post_l, post_q = np.linalg.eig(stress_pair.post_stress)
 
         if pre_l[0] >= pre_l[1]:
@@ -123,7 +132,7 @@ class StressPairEdit:
             f.write("theta_average : " + str(theta / count) + " rad\n")
             f.write("theta_average : " + str(math.degrees(theta / count)) + " degree\n")
             f.write("count : " + str(count) + "\n\n")
-
+        
     @staticmethod
     def compute_line(path_list: list[str], out_fn: str) -> None:
         all_stress_pair_data = AllStressPairData()
@@ -149,7 +158,6 @@ class StressPairEdit:
 
                 for stress_pair in stress_pair_data.stress_pair_array:
                     pre_principal_stress, post_principal_stress = StressPairEdit.compute_principal_stress(stress_pair)
-
                     if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
                         continue
 
@@ -181,24 +189,29 @@ def main():
     # 応力圧縮
     if mode == 0:
         # 圧縮対象の応力データファイルへのパス
-        stress_fn = "simulated_data/tri_high/stress_pair_0.500000.h5"
+        # stress_fn = "simulated_data/tri_high/stress_pair_0.500000.h5"
+        stress_fn = "simulated_data/square11/stress_pair_0.500000.h5"
+
 
         # 応力データに対応した粒子データファイルへのパス
-        scene_fn = "simulated_data/tri_high/element_data_0.500000.h5"
+        # scene_fn = "simulated_data/tri_high/element_data_0.500000.h5"
+        scene_fn = "simulated_data/square11/element_data_0.500000.h5"
 
         # 圧縮後のファイル保存先
-        compressed_stress_fn = "simulated_data/tri_high/compressed_stress.h5"
+        compressed_stress_fn = "simulated_data/square11/output/compressed_stress.h5"
         
         stress_pair_edit.compress(stress_fn, scene_fn, compressed_stress_fn)
 
     # 応力解析
     if mode == 1:
         # 結果出力先
-        out_fn = "debug/debug_square.txt"
+        # out_fn = "debug/debug_square.txt"
+        out_fn = "debug/debug_square11.txt"
         
         # データ解析対象ファイルを列挙
-        stress_fn = ["simulated_data/triangle/stress_pair_0.500000.h5",
-                     "simulated_data/tri_high/stress_pair_0.500000.h5"]
+        # stress_fn = ["simulated_data/triangle/stress_pair_0.500000.h5",
+        #              "simulated_data/tri_high/stress_pair_0.500000.h5"]
+        stress_fn = ["simulated_data/square11/stress_pair_0.500000.h5"]
 
         # stress_fn = ["simulated_data/21/compressed_stress.h5",
         #              "simulated_data/11/compressed_stress.h5"]
