@@ -365,40 +365,82 @@ cd /python/inialization
 ```
 
 #### 1. 地面作成
+
 ```bash
 python floorgenerator.py
 ```
+
 regenerateを押し、地面となる円が配置される。
-Save fileを押して、名前を付けて（例: floor_template.h5, floor.h5）ファイルを保存。
+~~Save fileを押して、名前を付けて（例: floor_template.h5, floor.h5）ファイルを保存。~~
+
+`Save file` を押して保存先を選択し、 `floor` と名前をつけて保存すると
+
+- `floor.h5`
+- `floor_template.h5`
+
+の2つのファイルが保存される。
 
 #### 2. 壁の作成
+
 ```bash
 python boundarydesign.py
 ```
-load_floorを押し、前工程で作成したfloor_template.h5, floor.h5を選択(この順番で選択しないとアプリがクラッシュする)。
+
+`Load floor` を押し、前工程で作成した `floor_template.h5` , `floor.h5` を選択(この順番で選択しないとアプリがクラッシュする)。
+
 スライダーで幅と高さを調整.
-Saveを押し、名前を付け（例: boundary_template.h5, boundary.h5）ファイルを保存
+
+~~Saveを押し、名前を付け（例: boundary_template.h5, boundary.h5）ファイルを保存~~
+
+`Save all` ボタンをクリックして保存先を選択し、 `boundary` と名前をつけて保存すると
+
+- `boundary.h5`
+- `boundary_template.h5`
+
+の2つのファイルが保存される。
 
 #### 3. 粒子の生成
+
 ```bash
 python geninitialcolumn.py
 ```
+
 スライダーで粒子の大きさ、ばらつき、形状の比を調節。
+
 設定を調節後、Generateを押し、粒子を生成。
-Saveを押し、名前を付けファイルを保存（例: particle_template.h5, particle.h5）
+
+~~Saveを押し、名前を付けファイルを保存（例: particle_template.h5, particle.h5）~~
+
+`Save` ボタンをクリックして保存先を選択し、`particle` 等と名前をつけて保存すると
+
+- `particle.h5`
+- `particle_template.h5`
+
+の2つのファイルが保存される。
 
 #### 4. 壁と粒子の結合
+
 ```bash
 python mergetool.py
 ```
-Loadを押し、前工程である「壁の生成」と「粒子の生成」で作成した壁と粒子のファイルをどちらもLoadする。
-この時ファイルを選ぶ順番は、boundary_template.h5, boundary.h5, particle_template.h5, particle.h5のようにtemplateが付くものから先に選択しないとクラッシュする。
-Saveを押し、名前を付けファイルを保存（例: circle11_template.h5, circle11.h5)
+
+`Load` ボタンを押し、前工程である「壁の生成」と「粒子の生成」で作成した壁と粒子のファイルをどちらもLoadする。
+
+（この時ファイルを選ぶ順番は、boundary_template.h5, boundary.h5, particle_template.h5, particle.h5のようにtemplateが付くものから先に選択しないとクラッシュする。）
+
+`Save` ボタンを押して保存先を選択し、 `circle11` 等と名前を付け保存すると
+
+- `circle11.h5`
+- `circle11_template.h5`
+
+の2つのファイルが保存される
 
 ---
 
 ### 貯めるの実行
+
 作業ディレクトリに移動
+
 ```bash
 cd Simulator/tameru
 ```
@@ -407,12 +449,19 @@ cd Simulator/tameru
 ここでは、シーケンシャルに実行するためにファイルを配置する方法を説明する。
 
 入出力を行うためのディレクトリを用意する(既にある場合もある)
+
 ```bash
 src/python/simulator/tameru/IOData/"形状名"/"比率"
 # 例
 src/python/simulator/tameru/IOData/Circle/11
 ```
-上記のディレクトリに、[貯めるの環境作成](#貯めるの環境作成) の「4.壁と粒子の結合」の際に保存した2つのhdfファイルをコピーする。
+
+上記のディレクトリに、[貯めるの環境作成](#貯めるの環境作成) の「4.壁と粒子の結合」の際に保存した2つのファイル(
+  
+- `形状・比率.h5`
+- `形状・比率_template.h5`
+
+をコピーする。
 
 - シーケンシャルにおこなうための設定
 実験設定応じて、Simulator/tameru/piledSimulationLoop_python.pyのコードを以下のように書き換える.
