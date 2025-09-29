@@ -17,7 +17,7 @@ namespace CompileDefinitions
   constexpr char CXXCompiler[] = "/usr/bin/c++";
 
   // Date and time
-  constexpr char BuildDateTime[] = "2025-07-17 20:36:45";
+  constexpr char BuildDateTime[] = "2025-09-29 13:21:51";
 
 }
 
