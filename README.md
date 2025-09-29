@@ -464,6 +464,7 @@ src/python/simulator/tameru/IOData/Circle/11
 をコピーする。
 
 - シーケンシャルにおこなうための設定
+
   実験設定応じて、Simulator/tameru/piledSimulationLoop_python.pyのコードを以下のように書き換える.
   - RUN_NUMに実行するファイル数を指定
   - WORKING＿DIR:読みこむファイルがあるディレクトリを指定
@@ -471,23 +472,27 @@ src/python/simulator/tameru/IOData/Circle/11
   - TEMPLATE_FILE：「壁と粒子の結合」で作成した、読むこむオブジェクトファイル
 
   配列要素番号には、実行される順番を指定
-  
+
   run_listにmac, ubuntuの場合, .exeを削除。
 
 - パラメータの設定
-DEM_test.xmlを開き、以下を実験設定に応じて書き換える。
-    - dt:タイムステップ
-    - dx_sample_points:サンプルポイント数
-    - ugrd_dx:ブロードフェーズで用いる、格子の幅
-    - max_time:何秒までシミュレーションを実行するか
-    - 属性penalty_impact_map:ペナルティ法のパラメータ
-    - 属性resume:入力ファイルの場所（尚これはpiledSimulationLoop_python.pyによって動的に書き換えられる）
-    - 属性serialization:データを出力する場所と頻度
+
+  DEM_test.xmlを開き、以下を実験設定に応じて書き換える。
+  - dt:タイムステップ
+  - dx_sample_points:サンプルポイント数
+  - ugrd_dx:ブロードフェーズで用いる、格子の幅
+  - max_time:何秒までシミュレーションを実行するか
+  - 属性penalty_impact_map:ペナルティ法のパラメータ
+  - 属性resume:入力ファイルの場所（尚これはpiledSimulationLoop_python.pyによって動的に書き換えられる）
+  - 属性serialization:データを出力する場所と頻度
 
 - シミュレータの実行
+
 python piledSimulationLoop_python.pyを実行することシミュレーションを開始する。
+
 出力データが"IOData/形状名/比/Output/"に出力される。
-<span style="color: red; ">ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。</span>
+
+**ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。**
 
 ---
 

@@ -46,6 +46,7 @@ if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
 endif()
 target_link_libraries( ${PROJECT_NAME} Eigen3::Eigen )
 
+# HDF5
 find_package( HDF5 REQUIRED )
 if( NOT ${HDF5_FOUND} )
   message( FATAL_ERROR "HDF5 not found." )
@@ -53,6 +54,10 @@ endif()
 target_include_directories( ${PROJECT_NAME} SYSTEM PUBLIC ${HDF5_INCLUDE_DIRS} )
 target_compile_definitions( ${PROJECT_NAME} PUBLIC USE_HDF5 )
 target_link_libraries( ${PROJECT_NAME} ${HDF5_LIBRARIES} )
+
+# Open MPI
+find_package(MPI REQUIRED)
+target_link_libraries(${PROJECT_NAME} MPI::MPI_CXX)
 
 find_package( RapidXML REQUIRED )
 target_include_directories( ${PROJECT_NAME} SYSTEM PUBLIC ${RapidXML_INCLUDE_DIR} )

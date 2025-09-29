@@ -13,8 +13,9 @@ for i in np.arange(0,RUN_NUM):
 WORKING_DIR[0]="./IOData/Circle/22/"
 WORKING_DIR[11]="./IOData/Circle/11/"
 """
+WORKING_DIR[0]="./IOData/Circle/11/"
 # WORKING_DIR[0]="./IOData/Circle/12/"
-WORKING_DIR[0]="./IOData/Square/11/"
+# WORKING_DIR[0]="./IOData/Square/11/"
 
 """
 WORKING_DIR[3]="./IOData/Circle/13/"
@@ -66,8 +67,9 @@ for i in np.arange(0,RUN_NUM):
 OBJECT_FILE[0]="circle22.h5"
 OBJECT_FILE[11]="circle11.h5"
 """
+OBJECT_FILE[0]="circle11.h5"
 # OBJECT_FILE[0]="circle12.h5"
-OBJECT_FILE[0]="square11.h5"
+# OBJECT_FILE[0]="square11.h5"
 
 """
 OBJECT_FILE[3]="circle13.h5"
@@ -118,8 +120,9 @@ for i in np.arange(0,RUN_NUM):
 TEMPLATE_FILE[0]="circle22_template.h5"
 TEMPLATE_FILE[11]="circle11_template.h5"
 """
+TEMPLATE_FILE[0]="circle11_template.h5"
 # TEMPLATE_FILE[0]="circle12_template.h5"
-TEMPLATE_FILE[0]="square11_template.h5"
+# TEMPLATE_FILE[0]="square11_template.h5"
 
 """
 TEMPLATE_FILE[3]="circle13_template.h5"
