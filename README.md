@@ -456,7 +456,7 @@ src/python/simulator/tameru/IOData/"形状名"/"比率"
 src/python/simulator/tameru/IOData/Circle/11
 ```
 
-上記のディレクトリに、[貯めるの環境作成](#貯めるの環境作成) の「4.壁と粒子の結合」の際に保存した2つのファイル(
+上記のディレクトリに、[貯めるの環境作成](#貯めるの環境作成) の「4.壁と粒子の結合」の際に保存した2つのファイル
   
 - `形状・比率.h5`
 - `形状・比率_template.h5`
@@ -464,14 +464,15 @@ src/python/simulator/tameru/IOData/Circle/11
 をコピーする。
 
 - シーケンシャルにおこなうための設定
-実験設定応じて、Simulator/tameru/piledSimulationLoop_python.pyのコードを以下のように書き換える.
-    - RUN_NUMに実行するファイル数を指定
-    - WORKING＿DIR:読みこむファイルがあるディレクトリを指定
-    - OBJECT_FILE:「壁と粒子の結合」で作成した、読むこむオブジェクトファイル
-    - TEMPLATE_FILE：「壁と粒子の結合」で作成した、読むこむオブジェクトファイル
+  実験設定応じて、Simulator/tameru/piledSimulationLoop_python.pyのコードを以下のように書き換える.
+  - RUN_NUMに実行するファイル数を指定
+  - WORKING＿DIR:読みこむファイルがあるディレクトリを指定
+  - OBJECT_FILE:「壁と粒子の結合」で作成した、読むこむオブジェクトファイル
+  - TEMPLATE_FILE：「壁と粒子の結合」で作成した、読むこむオブジェクトファイル
 
-    配列要素番号には、実行される順番を指定
-    run_listにmac, ubuntuの場合, .exeを削除。
+  配列要素番号には、実行される順番を指定
+  
+  run_listにmac, ubuntuの場合, .exeを削除。
 
 - パラメータの設定
 DEM_test.xmlを開き、以下を実験設定に応じて書き換える。
