@@ -497,26 +497,36 @@ python piledSimulationLoop_python.pyを実行することシミュレーショ�
 ---
 
 ### 貯めるの可視化
+
 作業ディレクトリに移動
+
 ```bash
 cd Visualization/tameru
 ```
+
 #### 1. 貯めるの出力データを再配置
+
 "Simulator/tameru/IOData"フォルダを"Visualization/tameru/"にコピー
 
 #### 2. 連番画像の作成
+
 - render_obj.batを実行(windowsの場合)
 - MacOSの場合は`render_obj.sh`(自作)を実行
+
 ```bash
 ./render_obj.sh
 ```
 
 #### 3. 連番画像を動画化
+
 動画を保存するディレクトリを用意する。`python/Visualize/tameru`ディレクトリにて
+
 ```bash
 mkdir movie
 ```
+
 を行う。次の操作を行う。
+
 - Windowsの場合
   - 3.1 ffmpeg_pathにffmpeg.exeまでのpathに設定。
   - 3.2 tameru_pathに連番画像が入っているディレクトリまでのpathに設定。
@@ -524,6 +534,7 @@ mkdir movie
 - Mac(Apple Silicon)の場合
   - ffmpegを用意する（まだ無い場合）`brew install ffmpeg`
   - 以下のコマンドを実行して動画化する
+
 ```bash
  # 例：frame rate 30 fps、0.png-20.png を square11.mp4 にまとめる
 ffmpeg -framerate 30 \
@@ -538,26 +549,38 @@ ffmpeg -framerate 30 \
 ---
 
 ### 流すの環境作成
+
 ここでは、流すの入力ファイルとなる貯まった状態から、右側の柵を取り除いたファイルを作成する。
 
 作業ディレクトリに移動
+
 ```bash
 cd initialization
 ```
+
 #### 壁の取り外し
-1. GUIを実行
+
+GUIを実行
+
 ```bash
 python removetemplate.py
 ```
-2. Loadを押し、全行程である「貯めるの実行」で入力としたtemplateファイル、そこで出力された"Output/object(最後の番号)"（貯め終わった状態のオブジェクトファイル）の２つのファイルを読み込む。
 
-3. GUI内の"Right_wall"を押して有効かした状態で、"Delete_seleceted"を押す。
+`Load` ボタンを押し、前行程である「貯めるの実行」で入力とした　template　ファイル、そこで出力された　"Output/object(最後の番号)"（貯め終わった状態のオブジェクトファイル）の２つのファイルを読み込む。
+
+GUI内の `Right_wall` を押して有効かした状態で、 `Delete_seleceted` を押す。
+
 画面内の右側の壁が消えていることを確認する。
 
-4. Saveを押して、流すの入力データとなるファイルを保存するディレクトリを指定し、保存する。
-<span style="color: red; ">("Simulator/Inputdata/形状+比_flow.xml"というファイル名を推奨)
-ex)circle11_flow.h5, circle11_flow_template.h5
-</span>
+`Save` を押して保存先を、流すの入力データとなるファイルを保存するディレクトリ( `simulator/nagasu/Inputdata`)を指定し、`形状・比率_flow` という名前で保存する。
+
+- `形状・比率_flow.h5`
+- `形状・比率_flow_template.h5`
+
+という2つのファイルが保存されていることを確認する。
+
+**("Simulator/Inputdata/形状+比_flow.xml"というファイル名を推奨)**
+ex: circle11_flow.h5, circle11_flow_template.h5
 
 ---
 
