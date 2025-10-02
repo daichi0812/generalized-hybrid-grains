@@ -1,7 +1,5 @@
 import ctypes
 import math
-import csv
-import pandas as pd
 
 from enum import Enum
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -10,8 +8,6 @@ from matplotlib.collections import LineCollection
 from stresspairh5 import *
 from stress_pair_compressor import *
 from tqdm import tqdm
-from sklearn.preprocessing import PolynomialFeatures
-from scipy.optimize import minimize
 
 
 class PlotMode(Enum):
@@ -23,10 +19,10 @@ class PlotMode(Enum):
 
 class StressPlotCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        self.fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = self.fig.add_subplot(1, 1, 1)
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(1, 1, 1)
 
-        FigureCanvas.__init__(self, self.fig)
+        FigureCanvas.__init__(self, fig)
         self.setParent(parent)
 
         self.all_stress_pair_data = AllStressPairData()
@@ -48,16 +44,6 @@ class StressPlotCanvas(FigureCanvas):
         self.x_grad = 24.24894563
         self.y_grad = 0
 
-        self.x_shift = 0.0
-        self.y_shift = 0.0
-        self.zoom = 0.0
-
-        self.past_move_x = 0.0
-        self.past_move_y = 0.0
-        self.past_zoom = 1.0
-
-        self.shift_volume = 1000.0
-
     def calc_moving_average(self):
         count = 0
         average = np.array([0.0, 0.0]).transpose()
@@ -73,7 +59,7 @@ class StressPlotCanvas(FigureCanvas):
                 count += 1
 
         with open("./debug.txt", mode='a') as f:
-            f.writelines("2:1")
+            f.writelines("2:11")
             if count != 0:
                 f.write(str(average / count) + "\n")
 
@@ -81,7 +67,7 @@ class StressPlotCanvas(FigureCanvas):
         self.axes.cla()
 
         stress_pair_num = self.get_stress_num()
-        lines = np.zeros((stress_pair_num, 3, 2), dtype=ctypes.c_float)
+        lines = np.zeros((stress_pair_num, 2, 2), dtype=ctypes.c_float)
         idx = 0
 
         current = 0
@@ -89,25 +75,6 @@ class StressPlotCanvas(FigureCanvas):
 
         selected_cell_flat_idx = np.full(len(self.using_cell_idx_array), -1)
         is_all = True if selected_cell_flat_idx.size == 0 else False
-
-        ########/
-        X_hat, y = self.get_data(2, 2)
-        print("X_hat shape: ", X_hat.shape)
-        print("y shape: ", y.shape)
-        Theta_initial = np.zeros(X_hat.shape[1] * 2 + 2)
-
-        # Use the Jacobian in the optimization
-        result = minimize(self.objective_function, Theta_initial, args=(X_hat, y), method='BFGS')
-        optimal_params = result.x
-        weights = optimal_params[:X_hat.shape[1] * 2].reshape(-1, 2)
-
-        final_theta = result.x.reshape(2,6)
-        # Output optimized parameters and cost
-        print("Optimized parameters:", final_theta)
-        print("Minimum cost:", result.fun)
-
-        #########
-
 
         for i in tqdm(self.using_data_range):
             stress_pair_data = self.all_stress_pair_data.stress_pair_data_array[i]
@@ -121,74 +88,38 @@ class StressPlotCanvas(FigureCanvas):
 
                     if current - previous < self.stride:
                         continue
-
+                    
                     pre_principal_stress, post_principal_stress = self.compute_principal_stress(stress_pair)
 
                     if StressPairEdit.is_out_of_scope(pre_principal_stress, post_principal_stress):
                         continue
 
-                    pre_principal_stress2 = np.array([[pre_principal_stress[0], pre_principal_stress[1]]])
-                    poly_features = PolynomialFeatures(degree=2, include_bias=False)
-                    x_poly = poly_features.fit_transform(pre_principal_stress2)
-                    #for i, name in enumerate(poly_features.get_feature_names_out()):
-                        #if '^2' in name:
-                           # x_poly[:, i] /= 2.0  # Divide pure quadratic terms by 2
-                    #x_hat = np.hstack((np.ones((x_poly.shape[0], 1)), x_poly))
-                    predictions = x_poly @ weights
-
                     lines[idx, 0] = np.array([pre_principal_stress[0], pre_principal_stress[1]])
                     lines[idx, 1] = np.array([post_principal_stress[0], post_principal_stress[1]])
-                    lines[idx, 2] = np.array([predictions[0, 0], predictions[0, 1]])
                     idx += 1
 
                     previous = current
-
-
 
         lc = LineCollection(lines, colors="y", linewidths=self.line_width)
         self.axes.add_collection(lc)
 
         self.axes.scatter(lines[:, 0, 0], lines[:, 0, 1], facecolor="blue", s=self.marker_size)
         self.axes.scatter(lines[:, 1, 0], lines[:, 1, 1], facecolor="red", s=self.marker_size)
-        self.axes.scatter(lines[:, 2, 0], lines[:, 2, 1], facecolor="green", s=self.marker_size)
 
         self.set_axis()
         self.draw()
 
-    def set_move_plot_range_x(self, x_move):
-        self.x_shift = self.x_shift + x_move - self.past_move_x
-        self.past_move_x = x_move
-        self.axes.axis(
-            [(-self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (-self.current_lim + self.y_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.y_shift * self.shift_volume / self.current_lim)])
-        self.draw()
-
-    def set_move_plot_range_y(self, y_move):
-        self.y_shift = self.y_shift + y_move - self.past_move_y
-        self.past_move_y = y_move
-        self.axes.axis(
-            [(-self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (-self.current_lim + self.y_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.y_shift * self.shift_volume / self.current_lim)])
-        self.draw()
-
-    def set_zoom_plot(self, zoom):
-        self.current_lim = self.current_lim * zoom / self.past_zoom
-        self.past_zoom = zoom
-        self.axes.axis(
-            [(-self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (-self.current_lim + self.y_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.y_shift * self.shift_volume / self.current_lim)])
-
-        self.draw()
-
     @staticmethod
     def compute_principal_stress(stress_pair):
+        if(np.isnan(stress_pair.pre_stress).any()):
+            print("pre_stress is nan")
+            print("pre_stress: \n", stress_pair.pre_stress)
+            stress_pair.pre_stress = np.nan_to_num(stress_pair.pre_stress)
         pre_l, pre_q = np.linalg.eig(stress_pair.pre_stress)
+        if(np.isnan(stress_pair.post_stress).any()):
+            print("post_stress is nan")
+            print("post_stress: \n", stress_pair.post_stress)
+            stress_pair.post_stress = np.nan_to_num(stress_pair.post_stress)
         post_l, post_q = np.linalg.eig(stress_pair.post_stress)
 
         if pre_l[0] >= pre_l[1]:
@@ -245,11 +176,7 @@ class StressPlotCanvas(FigureCanvas):
 
         self.axes.plot([0.0, -self.max_lim], [0.0, self.y(-self.max_lim)], color='m', linewidth=self.line_width)
 
-        self.axes.axis(
-            [(-self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.x_shift * self.shift_volume / self.current_lim),
-             (-self.current_lim + self.y_shift * self.shift_volume / self.current_lim),
-             (self.current_lim + self.y_shift * self.shift_volume / self.current_lim)])
+        self.axes.axis([-self.current_lim, self.current_lim, -self.current_lim, self.current_lim])
         self.axes.grid()
 
     def replot(self):
@@ -291,20 +218,11 @@ class StressPlotCanvas(FigureCanvas):
         self.y_grad = y_grad
         self.stride = stride
         self.line_width = width
-        self.init_slider_parameter()
         self.replot()
-
-    def init_slider_parameter(self):
-        self.x_shift = 0.0
-        self.y_shift = 0.0
-        self.past_move_x = 0.0
-        self.past_move_y = 0.0
-        self.past_zoom = 0.0
 
     def reset_current_lim(self):
         self.current_lim = self.max_lim
         self.replot()
-        self.init_slider_parameter()
 
     def set_cell_pos(self, cell_pos):
         self.cell_pos_list = cell_pos
@@ -334,42 +252,3 @@ class StressPlotCanvas(FigureCanvas):
     def plot_data_per_cell_and_timestep(self):
         self.plot_mode = PlotMode.PLOT_PER_CELL_AND_TIMESTEP
         self.replot()
-
-###
-    def get_data(self, n, m):
-
-        data = pd.read_csv('sample.csv')
-        # data = pd.read_csv('normal_xdiff_data.csv')
-        y = data.iloc[:, m:m + n].values
-        x = data.iloc[:, :m].values
-
-        poly_features = PolynomialFeatures(degree=2, include_bias=False)
-        X_poly = poly_features.fit_transform(x)
-
-        for i, name in enumerate(poly_features.get_feature_names_out()):
-            if '^2' in name:
-                X_poly[:, i] /= 2.0  # Divide pure quadratic terms by 2
-
-
-        print("X_poly shape: ", X_poly.shape[0])
-        return X_poly, y
-
-    def objective_function(self, Theta, X, Y):
-        n_features = X.shape[1]
-        weights = Theta[:n_features * 2].reshape(-1, 2)  # 係数
-        intercept = Theta[n_features * 2:]  # 切片
-
-        Y_pred = X @ weights + intercept  # 予測値
-        mse = np.mean((Y - Y_pred) ** 2)  # 平均二乗誤差
-        return mse
-
-    def f(self,Theta, X):
-        Theta = Theta.reshape(2, X.shape[1])
-        return X @ Theta.T
-
-    def compute_gradient(self, Theta, X, Y):
-        Theta = Theta.reshape(2, X.shape[1])
-        predictions = self.f(Theta, X)
-        error = predictions - Y
-        gradient = (2 / X.shape[0]) * X.T @ error
-        return gradient.T.ravel()

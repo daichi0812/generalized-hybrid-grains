@@ -183,22 +183,22 @@ class StressPairEdit:
 
 
 def main():
-    mode = 1  # 0 = 応力圧縮, 11 = 応力解析
+    mode = 0  # 0 = 応力圧縮, 11 = 応力解析
     stress_pair_edit = StressPairEdit()
 
     # 応力圧縮
     if mode == 0:
         # 圧縮対象の応力データファイルへのパス
         # stress_fn = "simulated_data/tri_high/stress_pair_0.500000.h5"
-        stress_fn = "simulated_data/square11/stress_pair_0.500000.h5"
+        stress_fn = "simulated_data/circle11/stress_pair_1.500000.h5"
 
 
         # 応力データに対応した粒子データファイルへのパス
         # scene_fn = "simulated_data/tri_high/element_data_0.500000.h5"
-        scene_fn = "simulated_data/square11/element_data_0.500000.h5"
+        scene_fn = "simulated_data/circle11/element_data_1.500000.h5"
 
         # 圧縮後のファイル保存先
-        compressed_stress_fn = "simulated_data/square11/output/compressed_stress.h5"
+        compressed_stress_fn = "simulated_data/circle11/output/compressed_stress.h5"
         
         stress_pair_edit.compress(stress_fn, scene_fn, compressed_stress_fn)
 
@@ -206,12 +206,12 @@ def main():
     if mode == 1:
         # 結果出力先
         # out_fn = "debug/debug_square.txt"
-        out_fn = "debug/debug_square11.txt"
+        out_fn = "debug/debug_circle11.txt"
         
         # データ解析対象ファイルを列挙
         # stress_fn = ["simulated_data/triangle/stress_pair_0.500000.h5",
         #              "simulated_data/tri_high/stress_pair_0.500000.h5"]
-        stress_fn = ["simulated_data/square11/stress_pair_0.500000.h5"]
+        stress_fn = ["simulated_data/circle11/stress_pair_1.500000.h5"]
 
         # stress_fn = ["simulated_data/21/compressed_stress.h5",
         #              "simulated_data/11/compressed_stress.h5"]

@@ -1,0 +1,20 @@
+--------------------------------
+
+--------------------------------
+
+simulated_data/circle11/stress_pair_1.500000.h5
+moving_average: [-125.74098717  -85.40698953]
+rot90_average : [  85.40698953 -125.74098717]
+dem_p_average : [ -878.4180214  -4632.22633213]
+theta_average : 1.5279296921923773 rad
+theta_average : 87.54392275534619 degree
+count : 6418143
+
+total
+moving_average: [-125.74098717  -85.40698953]
+rot90_average : [  85.40698953 -125.74098717]
+dem_p_average : [ -878.4180214  -4632.22633213]
+theta_average : 1.5279296921923773 rad
+theta_average : 87.54392275534619 degree
+count : 6418143
+

@@ -234,13 +234,13 @@
 
    ホームディレクトリで以下を実行
 
-   ```
+   ```zsh
    ~/local/python/bin/python3 -m venv 仮想環境名
    ```
 
 6. 仮想環境の有効化
 
-   ```
+   ```zsh
    source ~/仮想環境名/bin/activate
    ```
 
@@ -250,7 +250,7 @@
     git clone https://github.com/AGU-Graphics/GeneralizedHybridGrainsResearch.git
     ```
 
-8.  no_openGLブランチをチェックアウト
+8. no_openGLブランチをチェックアウト
 
     ```bash
     git checkout no_openGL
@@ -258,7 +258,7 @@
 
 9. 必要ライブラリのインストール
 
-    ```
+    ```zsh
     source ~/仮想環境名/bin/activate
     pip install -r docs/requirements.txt へのパス
     ```
@@ -269,33 +269,34 @@
 
     シミュレーション実行後に接続を切りたい場合にはシェル実行時に以下のコマンドを利用してください。
 
-    ```
+    ```zsh
     nohup ./flowstress.sh &
     ```
 
 11. シミュレーションの停止方法
 
-  - nohup + & を付けずにシェルを実行した場合には Ctrl + c で停止できます。
+- nohup + & を付けずにシェルを実行した場合には Ctrl + c で停止できます。
 
-  - nohup + & を付けた場合にはプロセス番号を調べて以下のコマンドを使用することで停止できます。
+- nohup + & を付けた場合にはプロセス番号を調べて以下のコマンドを使用することで停止できます。
 
-    ```
-    kill プロセス番号
-    ```
+```zsh
+kill プロセス番号
+```
 
-    プロセス番号は以下のようなコマンドで調べられます。
+プロセス番号は以下のようなコマンドで調べられます。
 
-    ```
-    ps aux | grep flowstress.sh
-    ```
+```zsh
+ps aux | grep flowstress.sh
+```
 
 ### 注意事項
 
-- サーバー側では conda ではなく pip を使用しているため<span style="color: red; ">仮想環境の有効化コマンドが異なります</span>。
+- サーバー側では conda ではなく pip を使用しているため**仮想環境の有効化コマンドが異なります**
 
-- 本手順書は python の仮想環境を利用する前提で記述していますので上記の手順通りにコマンドを実行した場合は、<span style="color: red; ">必ず対応した仮想環境を有効化</span>してからシミュレーションを実行してください
+- 本手順書は python の仮想環境を利用する前提で記述していますので上記の手順通りにコマンドを実行した場合は、**必ず対応した仮想環境を有効化**<してからシミュレーションを実行してください
 
 ### 参考
+
 [Libffi インストール](https://notemite.com/python/no-module-named-ctypes/)
 
 [Python インストール](https://www.think-self.com/programming/python/local-python-install/)
@@ -336,6 +337,7 @@
 ## その他
 
 ### MPMシミュレータについて
+
 - 本プロジェクトで使用しているMPMシミュレータは [既存のMPMシミュレータ](https://github.com/AGU-Graphics/AGMPM.git) を改変して使用しています。
 - 基本的には既存のものと同じ関数を使用しています。
 - 関数名に WithData を含む関数が本プロジェクト独自の関数になっています。
@@ -345,21 +347,25 @@
 # 引き継ぎ書(2024年3月版)
 
 ## 環境構築
+
 実行環境作成手順は
 [前年度引継ぎ書](#引き継ぎ書2023年度) を参照してください。
 
 ## 応力データ取得手順
-応力データの取得作業は以下の../src/python下の、以下のようなディレクトリでおこなう。
-- ../src/python
-    - initialization（シミュレーションの実験環境作成ツール）
-    - Simulator（シーケンシャルにシミュレータ（exeを含む）を回すツール）
-    - Visualization(可視化用ツール)
 
+応力データの取得作業は以下の../src/python下の、以下のようなディレクトリでおこなう。
+
+- ../src/python
+  - initialization（シミュレーションの実験環境作成ツール）
+  - Simulator（シーケンシャルにシミュレータ（exeを含む）を回すツール）
+  - Visualization(可視化用ツール)
 
 ---
 
 ### 貯めるの環境作成
+
 作業ディレクトリに移動
+
 ```bash
 cd /python/inialization
 ```
@@ -490,7 +496,7 @@ src/python/simulator/tameru/IOData/Circle/11
 
 python piledSimulationLoop_python.pyを実行することシミュレーションを開始する。
 
-出力データが"IOData/形状名/比/Output/"に出力される。
+出力データが `IOData/形状名/比/output/` に出力される。
 
 **ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。**
 
@@ -689,20 +695,22 @@ cd Visualize/nagasu
     ex)Visualization/nagasu/IOData/Circle/11/circle11_flow_template.h5
 ```
 
-#### 2. 連番画像の作成
+#### 流すの連番画像の作成
 
 Windows: `render_obj.bat`を実行
 
 Mac: `render_obj.sh`を実行
 
-#### 3. 連番画像を動画化
+#### 流すの連番画像を動画化
 
 Windows:
-    3.1 ffmpeg_pathにffmpeg.exeまでのpathに設定。
-    3.2 tameru_pathに連番画像が入っているディレクトリまでのpathに設定。
-    3.3 make_piled_video.batを実行
+
+- ffmpeg_pathにffmpeg.exeまでのpathに設定。
+- tameru_pathに連番画像が入っているディレクトリまでのpathに設定。
+- make_piled_video.batを実行
 
 Mac:
+
 `Visualize/nagasu` で以下を実行して動画を作成する（事前にmovieディレクトリを作っておく必要あり）
 
 ```zsh
@@ -713,12 +721,14 @@ ffmpeg -framerate 30 \
        movie/square11.mp4
 ```
 
-ファイル"Visualization/tameru/movie"に動画が出力される。
+`Visualize/nagasu/movie` に動画が出力される。
 
 ---
 
 ## 解析ツールの使い方
+
 ### データ圧縮・解析ツール(Simulator/stress_pair_compressor.py)
+
 [stress_pair_compressor.py](../src/python/simulator/stress_pair_compressor.py) の main関数に対象ファイルのパスを設定し、データの圧縮・解析を行う。
 
 - 圧縮後のファイル -> プロット用
@@ -728,19 +738,23 @@ ffmpeg -framerate 30 \
 詳細は[コード](../src/python/simulator/stress_pair_compressor.py)参照.
 
 ### プロット作成(Simulator/extractStressPlot.py)
+
  [extractStressPlot.py](../src/python/simulator/extractStressPlot.py) の load メソッド内のパスを設定して実行することでプロットを作成できる。
 
 ### 範囲外にある不要な粒子を削除するツール(initialization/removeobject.py)
+
  [removeobject.py](../src/python/initialization/removeobject.py) の load メソッド内のパスを設定して実行し、bounding_boxとなる範囲をスライダーで設定することで、範囲外にある粒子を削除することができる。
 
 ### 簡易的な粒子の可視化ツール(analysis/grainviewer.py)
+
  [grainviewer.py](../src/python/analysis/grainviewer.py) の load メソッド内のパスを設定して実行することで粒子を可視化し、zoomスライダーによって拡大表示することができる。
 
+## コード概要
 
-# コード概要
 ここでは、各コードの概要について解説する。
 
 ## 貯めるシミュレータ
+
 ここでは、「貯める、流すの実行」で必要なシミュレータ"src/cpp/RigidBody2D"以下のファイルについて説明する。
 ### 入出力ファイル
 シミュレータではコマンドライン引数として以下のxmlファイルとしてパラメータを与え、以下のようなhdfファイルである入出力データとして使用している
