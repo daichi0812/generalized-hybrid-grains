@@ -3,9 +3,10 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit
 tmp=/tmp/$$exec_taichi
-Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu"
+# Prefix="/Users/shotaro/DevHub/CG/generalized-hybrid-grains/src/python/simulator/nagasu"
+Prefix="/Users/daichi/dev-hub/cg/generalized-hybrid-grains/src/python/simulator/nagasu"
 DEM="./DEMstress/DEM.h5"
-PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/bin/python"
+PYTHON_PATH="/opt/homebrew/Caskroom/miniforge/base/envs/generalized-hybrid-grains/bin/python"
 MaxLoop=1500
 
 ${PYTHON_PATH} ${Prefix}/initResumefn.py homogenize_stress.xml

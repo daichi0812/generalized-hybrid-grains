@@ -7,9 +7,9 @@ OBJECT_FILE = []
 for i in range(RUN_NUM):
     OBJECT_FILE.append("")
 #OBJECT_FILE[0]="circle12.h5"
-#OBJECT_FILE[0]="circle11.h5"
+OBJECT_FILE[0]="circle11.h5"
 # OBJECT_FILE[0]="circle22.h5"
-OBJECT_FILE[0] = "square11.h5"
+# OBJECT_FILE[0] = "square11.h5"
 
 
 # set template files
@@ -17,9 +17,9 @@ TEMPLATE_FILE = []
 for i in range(RUN_NUM):
     TEMPLATE_FILE.append("")
 #TEMPLATE_FILE[0]="circle12_template.h5"
-#TEMPLATE_FILE[0]="circle11_template.h5"
+TEMPLATE_FILE[0]="circle11_template.h5"
 # TEMPLATE_FILE[0]="circle22_template.h5"
-TEMPLATE_FILE[0]="square11_template.h5"
+# TEMPLATE_FILE[0]="square11_template.h5"
 
 #you should change with depending on your own laptop
 HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
@@ -31,8 +31,13 @@ HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
 def RenameObjectFile(file_name):
     # "triangle31.h5"
     # "-> triangle31_flow.h5"
-    "square11.h5"
-    "-> square11_flow.h5"
+
+    # "square11.h5"
+    # "-> square11_flow.h5"
+
+    "circle11.h5"
+    "-> circle11_flow.h5"
+
     tmp = file_name
     splited = tmp.split('.')
     tmp = f"{splited[0]}_flow.{splited[1]}"
@@ -41,8 +46,13 @@ def RenameObjectFile(file_name):
 def RenameTemplateFile(file_name):
     # "triangle31_template.h5"
     # "-> triangle31_flow_template.h5"
-    "square11_template.h5"
-    "-> square11_flow_template.h5"
+
+    # "square11_template.h5"
+    # "-> square11_flow_template.h5"
+
+    "circle11_template.h5"
+    "-> circle11_flow_template.h5"
+
     tmp = file_name
     splited = tmp.split('.')
     fileName = splited[0]

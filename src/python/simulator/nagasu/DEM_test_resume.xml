@@ -1,7 +1,7 @@
 <rigidbody2d>
-  <integrator dt="0.000001" dx="0.004" dx_sample_points="0.001" ugrd_dx="0.02" max_time="0.006000" />
+  <integrator dt="0.000001" dx="0.004" dx_sample_points="0.001" ugrd_dx="0.02" max_time="1.501000" />
   <penalty_impact_map kN="177209.38760736626" gammaN="46.1802" kT="4784653.465398889" gammaT="46.1802" mu="0.5" />
   <near_earth_gravity g="0.0 -9.81" />
-  <resume templates="Save_square11_flow/square11_flow_template.h5" objects="Save_square11_flow/square11_flow.h5" />
-  <serialization interval="0.000001" folder="Save_square11_flow" objects="square11_flow.h5" serialize_forces="1" forces="serialized_forces.h5" processing_time="Save_square11_flow/DEM_Processing_Time_square11_flow.csv" />
+  <resume templates="Save_circle11_flow/circle11_flow_template.h5" objects="Save_circle11_flow/circle11_flow.h5" />
+  <serialization interval="0.000001" folder="Save_circle11_flow" objects="circle11_flow.h5" serialize_forces="1" forces="serialized_forces.h5" processing_time="Save_circle11_flow/DEM_Processing_Time_circle11_flow.csv" />
 </rigidbody2d>

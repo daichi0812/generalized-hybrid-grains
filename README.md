@@ -585,22 +585,29 @@ ex: circle11_flow.h5, circle11_flow_template.h5
 ---
 
 ### 流すの実行
+
 #### 1. 入力データの配置
+
 「壁の取り外し」で作成した、流すの入力データファイルを"Simulator/Inputdata/"にコピーする。
 
 #### 2. シーケンシャルにおこなうための設定
-"Simulator/nagasu_loop.py"の以下のようにコードを編集する。
+
+`Simulator/nagasu_loop.py` を以下のようにコードを編集する。
+
 - RUN_NUMに連続でおこなうシミュレーション数を記入
 - OBJECT_FILE:「壁の取り外し」で作成した読むこむオブジェクトファイル
 - TEMPLATE_FILE：「壁の取り外し」で作成した、読むこむオブジェクトファイル
 
-<span style="color: red; ">ここでのファイル名には"_flow"を取り除く。
-ex)実際のファイル名"circle11_flow.h5", "circle11_flow_template"　
-⇒ OBJECT_FILE[0]="circle11.h5", TEMPLATE_FILE[0]="circe11_template"</span>
+ここでのファイル名には"_flow"を取り除く。
+
+ex: 実際のファイル名"circle11_flow.h5", "circle11_flow_template"
+
+⇒ OBJECT_FILE[0]="circle11.h5", TEMPLATE_FILE[0]="circe11_template"
 
 配列要素番号には、実行される順番を指定
 
 以下の例(macの際)のように、実行環境である行のコメントアウトを解除。その他2行をコメントアウト
+
 ```bash
 #you should change with depending on your own laptop
 HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
@@ -609,33 +616,37 @@ HomogenizeForceSleep_EXE = ["sh", "./HomogenizeForceSleep_mac.sh"]
 ```
 
 #### 3. パラメータの設定
-流すシミュレーションにおけるパラメータは以下のようになっている。
-- 3.1 DEM_test_resume.xml
-    - dt:タイムステップ
-    - dx_sample_points:サンプルポイント数
-    - ugrd_dx:ブロードフェーズで用いる、格子の幅
-    - max_time:何秒までシミュレーションを実行するか
-    - 属性penalty_impact_map:ペナルティ法のパラメータ
-    - 属性resume:入力ファイルの場所（尚これはnagasu_loop.pyによって動的に書き換えられる）
-    - 属性serialization:データを出力する場所と頻度
-- 3.2 homogenize_stress.xml
-    -  h:均質化用格子の幅
-    - interval:DEMのシミュレーションを1ステップで動かす秒数
-    - packing_fraction_threshold:外れ値として扱われるパッキング率の閾値
-    - distance_from_wall_threshold:外れ値として扱われる、格子の中心から壁までの距離
-- 3.3 homogenizerti.py
-    - estimate_force_num:1ステップの衝突データの最大数(taichiで確保するGPUメモリ)
-    - estimate_grid_num:1ステップの格子数の最大数(taichiで確保するGPUメモリ)
 
-- 3.4 HomogenizeForceSleep_mac.sh(windowsの場合はHomogenizeForceSleep.sh, ubuntuの場合はHomogenizeForceSleep_ubuntu.shを編集)
-    - MaxLoop:シミュレーションを回す回数
+流すシミュレーションにおけるパラメータは以下のようになっている。
+
+- DEM_test_resume.xml
+  - dt:タイムステップ
+  - dx_sample_points:サンプルポイント数
+  - ugrd_dx:ブロードフェーズで用いる、格子の幅
+  - max_time:何秒までシミュレーションを実行するか
+  - 属性penalty_impact_map:ペナルティ法のパラメータ
+  - 属性resume:入力ファイルの場所（尚これはnagasu_loop.pyによって動的に書き換えられる）
+  - 属性serialization:データを出力する場所と頻度
+- homogenize_stress.xml
+  - h:均質化用格子の幅
+  - interval:DEMのシミュレーションを1ステップで動かす秒数
+  - packing_fraction_threshold:外れ値として扱われるパッキング率の閾値
+  - distance_from_wall_threshold:外れ値として扱われる、格子の中心から壁までの距離
+- homogenizerti.py
+  - estimate_force_num:1ステップの衝突データの最大数(taichiで確保するGPUメモリ)
+  - estimate_grid_num:1ステップの格子数の最大数(taichiで確保するGPUメモリ)
+- HomogenizeForceSleep_mac.sh(windowsの場合はHomogenizeForceSleep.sh, ubuntuの場合はHomogenizeForceSleep_ubuntu.shを編集)
+  - MaxLoop:シミュレーションを回す回数
 
 #### 4. 流すの実行
+
 シミュレータをシーケンシャルに実行するコードを実行
+
 ```bash
 python nagasu_loop.py
 ```
-<span style="color: red; ">ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。</span>
+
+**ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。**
 
 出力されるデータは以下のように出力される
 - 応力データ：Simulator/nagasu/Save_形状_比_flow/stress_pair.h5"
