@@ -3,7 +3,7 @@ import numpy as np
 PYTHON_PATH="python"
 
 # 実行するファイル数を指定
-RUN_NUM=1
+RUN_NUM=6
 
 # set working directory(読みこむファイルがあるディレクトリを指定)
 WORKING_DIR = []
@@ -13,7 +13,13 @@ for i in np.arange(0,RUN_NUM):
 WORKING_DIR[0]="./IOData/Circle/22/"
 WORKING_DIR[11]="./IOData/Circle/11/"
 """
-WORKING_DIR[0]="./IOData/Circle/11/"
+WORKING_DIR[0]="./IOData/Circle/21/"
+WORKING_DIR[1]="./IOData/L/21/"
+WORKING_DIR[2]="./IOData/Pentagon/21/"
+WORKING_DIR[3]="./IOData/Square/21/"
+WORKING_DIR[4]="./IOData/Star/21/"
+WORKING_DIR[5]="./IOData/Triangle/21/"
+
 # WORKING_DIR[0]="./IOData/Circle/12/"
 # WORKING_DIR[0]="./IOData/Square/11/"
 
@@ -67,9 +73,14 @@ for i in np.arange(0,RUN_NUM):
 OBJECT_FILE[0]="circle22.h5"
 OBJECT_FILE[11]="circle11.h5"
 """
-OBJECT_FILE[0]="circle11.h5"
 # OBJECT_FILE[0]="circle12.h5"
 # OBJECT_FILE[0]="square11.h5"
+OBJECT_FILE[0]="circle21.h5"
+OBJECT_FILE[1]="L21.h5"
+OBJECT_FILE[2]="pentagon21.h5"
+OBJECT_FILE[3]="square21.h5"
+OBJECT_FILE[4]="star21.h5"
+OBJECT_FILE[5]="triangle21.h5"
 
 """
 OBJECT_FILE[3]="circle13.h5"
@@ -120,10 +131,14 @@ for i in np.arange(0,RUN_NUM):
 TEMPLATE_FILE[0]="circle22_template.h5"
 TEMPLATE_FILE[11]="circle11_template.h5"
 """
-TEMPLATE_FILE[0]="circle11_template.h5"
 # TEMPLATE_FILE[0]="circle12_template.h5"
 # TEMPLATE_FILE[0]="square11_template.h5"
-
+TEMPLATE_FILE[0]="circle21_template.h5"
+TEMPLATE_FILE[1]="L21_template.h5"
+TEMPLATE_FILE[2]="pentagon21_template.h5"
+TEMPLATE_FILE[3]="square21_template.h5"
+TEMPLATE_FILE[4]="star21_template.h5"
+TEMPLATE_FILE[5]="triangle21_template.h5"
 """
 TEMPLATE_FILE[3]="circle13_template.h5"
 TEMPLATE_FILE[4]="circle21_template.h5"
