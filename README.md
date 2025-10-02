@@ -310,7 +310,7 @@
 
    ローカルPC上で以下を実行
 
-    ```
+    ```zsh
     rsync -avzh --partial --inplace --append --progress -e ssh 接続先:対象ファイル or ディレクトリへのパス ダウンロード先
 
     例
@@ -665,15 +665,29 @@ python3 nagasu_loop.py
 ---
 
 ### 流すの可視化
+
 作業用ディレクトリに移動する。
+
 ```bash
 cd Visualize/nagasu
 ```
-#### 1. 貯めるの出力データを再配置
+
+#### 流すの出力データを再配置
+
+- `simulator/nagasu/Rolling_"形状・比率"_flow/element_data.h5` を `Visualize/nagasu/IOData/"形状"/"比率"/output` にコピー
+
+例: `Visualize/nagasu/IOData/Circle/11/Output/element_data.h5`
+
+- `simulator/nagasu/Save_"形状・比率"_flow/"形状・比率"_flow_template.h5` を `Visualize/nagasu/IOData/"形状"/"比率"/` にコピー
+
+例: `Visualize/nagasu/IOData/Circle/11/circle11_flow_template.h5`
+
+```plaintext
     1.1「流すの実行」で出力された"element_data.h5"を"Visualization/nagasu/IOData/形状名/比/Output/"にコピー
     ex)Visualization/nagasu/IOData/Circle/11/Output/element_data.h5
     1.2 入力データとなったtemplateファイルを"Visualization/nagasu/IOData/形状名/比/"にコピー
     ex)Visualization/nagasu/IOData/Circle/11/circle11_flow_template.h5
+```
 
 #### 2. 連番画像の作成
 

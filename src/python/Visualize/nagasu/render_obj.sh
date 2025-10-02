@@ -30,7 +30,7 @@ FRAMES=${1:-33}
 # )
 
 xml_list=(
-    render_square11.xml
+  render_circle11.xml
 )
 
 for xml in "${xml_list[@]}"; do

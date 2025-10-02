@@ -178,6 +178,11 @@ class GrainRender:
         self.drawElements(context, line_width)
 
     def render(self, bb, type, output_fn, size):
+        # 出力先ディレクトリを必ず作成
+        out_dir = os.path.dirname(output_fn)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+
         average_size = self.computeAverageSize()
         line_width = 0.5 * (average_size[0] + average_size[1]) * 0.04
 
