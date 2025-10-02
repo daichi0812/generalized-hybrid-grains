@@ -649,13 +649,15 @@ python nagasu_loop.py
 **ここで、OBJECT(TEMPLATE) FILE NOT FOUNDと出てきた場合、piledSimulationLoop_pythonの設定もしくは、ファイルを配置できていない。**
 
 出力されるデータは以下のように出力される
+
 - 応力データ：Simulator/nagasu/Save_形状_比_flow/stress_pair.h5"
 - 毎ステップの粒子の状態：Simulator/nagasu/element_data.h5"
 
 ### 再開方法
-- 1.
-Simulator/nagasu/Save_形状_比_flow/形状_比_flow.h5をInputDataにコピー
-- 2.シミュレーションを実行
+
+- Simulator/nagasu/Save_形状_比_flow/形状_比_flow.h5をInputDataにコピー
+- シミュレーションを実行
+
 ```bash
 python3 nagasu_loop.py
 ```
